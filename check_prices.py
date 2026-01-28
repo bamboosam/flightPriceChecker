@@ -31,7 +31,7 @@ async def check_flight_price(origin, destination, date):
         try:
             # Navigate to search results
             await page.goto(url)
-            await page.wait_for_timeout(10000)  # Wait 10 seconds
+            await page.wait_for_timeout(15000)  # Wait 15 seconds for page to fully load
             
             # Check if flights are loaded
             flights_loaded = await page.evaluate("""
@@ -43,15 +43,45 @@ async def check_flight_price(origin, destination, date):
             
             # If no flights found, click search button to trigger data fetch
             if not flights_loaded:
-                print(f"  [DEBUG] No flights initially loaded, clicking search button...")
+                print(f"  [DEBUG] No flights initially loaded, trying to click search button...")
                 try:
-                    # Look for the green Search button
-                    search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=5000)
-                    await search_btn.click()
-                    print(f"  [DEBUG] Search button clicked, waiting for results...")
-                    await page.wait_for_timeout(10000)  # Wait another 10 seconds
+                    # Try multiple selectors for the search button
+                    selectors = [
+                        'button:has-text("Search")',
+                        'button[type="submit"]',
+                        'button.btn-primary',
+                        '#home_Search',
+                        'button[class*="Search"]',
+                        'button[class*="submit"]'
+                    ]
+                    
+                    clicked = False
+                    for selector in selectors:
+                        try:
+                            search_btn = await page.wait_for_selector(selector, timeout=2000)
+                            if search_btn:
+                                await search_btn.click()
+                                print(f"  [DEBUG] Clicked search button using selector: {selector}")
+                                clicked = True
+                                break
+                        except:
+                            continue
+                    
+                    if clicked:
+                        await page.wait_for_timeout(10000)  # Wait for results
+                    else:
+                        print(f"  [DEBUG] Could not find search button, trying to reload page...")
+                        await page.reload()
+                        await page.wait_for_timeout(10000)
+                        
                 except Exception as e:
-                    print(f"  [DEBUG] Could not click search button: {e}")
+                    print(f"  [DEBUG] Search button workaround failed: {e}")
+                    # Try one more time by reloading
+                    try:
+                        await page.reload()
+                        await page.wait_for_timeout(10000)
+                    except:
+                        pass
             
             # Extract prices using JavaScript
             prices = await page.evaluate("""
