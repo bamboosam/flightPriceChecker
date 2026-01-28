@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  flight-checker:
+    build: .
+    container_name: airasia-price-checker
+    volumes:
+      # Mount config file
+      - ./config.yml:/app/config.yml
+      # Mount price history (persistent data)
+      - ./price_history.json:/app/price_history.json
+      # Mount debug screenshots
+      - ./debug_screenshots:/app/debug_screenshots
+    environment:
+      - TZ=Asia/Bangkok
+    restart: unless-stopped
+    # Run on schedule using cron-like syntax
+    # Uncomment below to run as a service, or use docker-compose run for manual execution
+    # command: sh -c "while true; do python3 check_prices.py && sleep 86400; done"

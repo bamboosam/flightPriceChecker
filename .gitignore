@@ -50,3 +50,6 @@ Thumbs.db
 
 # Keep price history (we want to commit this)
 !price_history.json
+
+# Docker
+.dockerignore
