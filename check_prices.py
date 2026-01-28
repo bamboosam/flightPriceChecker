@@ -51,64 +51,124 @@ async def check_flight_price(origin, destination, date):
             print(f"  [DEBUG] Page title: {page_title}")
             print(f"  [DEBUG] Current URL: {current_url}")
             
-            # Poll for flights to appear (they load asynchronously)
-            print(f"  [DEBUG] Waiting for flights to load...")
-            max_attempts = 12  # 12 attempts * 5 seconds = 60 seconds max
-            attempt = 0
-            flights_found = False
+            # CRITICAL: Find and click the search button
+            print(f"  [DEBUG] Looking for search button...")
             
-            while attempt < max_attempts and not flights_found:
-                attempt += 1
-                await page.wait_for_timeout(5000)  # Wait 5 seconds between checks
-                
-                # Check if flights are loaded
-                flight_info = await page.evaluate("""
-                    () => {
-                        const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
-                        const noFlightsMsg = document.querySelector('[class*="NoFlight"], [class*="no-flight"], .empty-state');
-                        const loadingIndicator = document.querySelector('[class*="Loading"], [class*="loading"], [class*="spinner"]');
+            # Strategy 1: Try to find all buttons on the page
+            all_buttons = await page.evaluate("""
+                () => {
+                    const buttons = document.querySelectorAll('button');
+                    return Array.from(buttons).map(btn => ({
+                        text: btn.textContent.trim(),
+                        type: btn.type,
+                        id: btn.id,
+                        classes: btn.className,
+                        visible: btn.offsetParent !== null
+                    }));
+                }
+            """)
+            
+            print(f"  [DEBUG] Found {len(all_buttons)} buttons on page:")
+            for i, btn in enumerate(all_buttons[:10]):  # Show first 10
+                print(f"    {i+1}. Text: '{btn['text'][:50]}', Type: {btn['type']}, ID: {btn['id']}, Visible: {btn['visible']}")
+            
+            # Strategy 2: Try multiple selectors to find and click search button
+            search_clicked = False
+            selectors_to_try = [
+                ('button:has-text("Search")', 'Text contains "Search"'),
+                ('button:has-text("search")', 'Text contains "search" (lowercase)'),
+                ('button[type="submit"]', 'Submit button'),
+                ('button.btn-primary', 'Primary button class'),
+                ('button[class*="search" i]', 'Class contains "search"'),
+                ('button[class*="Search"]', 'Class contains "Search"'),
+                ('#search-button', 'ID search-button'),
+                ('#searchButton', 'ID searchButton'),
+                ('button[aria-label*="search" i]', 'Aria-label contains search'),
+            ]
+            
+            for selector, description in selectors_to_try:
+                try:
+                    print(f"  [DEBUG] Trying selector: {selector} ({description})")
+                    button = await page.wait_for_selector(selector, timeout=3000, state='visible')
+                    if button:
+                        # Get button details before clicking
+                        button_text = await button.text_content()
+                        print(f"  [DEBUG] Found button with text: '{button_text}'")
                         
-                        return {
-                            flightCount: containers.length,
-                            hasNoFlightsMessage: !!noFlightsMsg,
-                            noFlightsText: noFlightsMsg?.textContent || '',
-                            isLoading: !!loadingIndicator,
-                            bodyClasses: document.body.className,
-                            hasSearchButton: !!document.querySelector('button:has-text("Search"), button[type="submit"]')
-                        };
+                        await button.click()
+                        print(f"  [DEBUG] ✓ Clicked search button using: {selector}")
+                        search_clicked = True
+                        break
+                except Exception as e:
+                    print(f"  [DEBUG] Selector failed: {str(e)[:100]}")
+                    continue
+            
+            if not search_clicked:
+                print(f"  [DEBUG] ⚠ Could not find search button with any selector")
+                print(f"  [DEBUG] Trying JavaScript click on any button with 'search' text...")
+                
+                # Strategy 3: Use JavaScript to find and click
+                js_clicked = await page.evaluate("""
+                    () => {
+                        const buttons = Array.from(document.querySelectorAll('button'));
+                        const searchBtn = buttons.find(btn => 
+                            btn.textContent.toLowerCase().includes('search') ||
+                            btn.className.toLowerCase().includes('search') ||
+                            btn.id.toLowerCase().includes('search')
+                        );
+                        
+                        if (searchBtn) {
+                            searchBtn.click();
+                            return {
+                                success: true,
+                                text: searchBtn.textContent.trim(),
+                                id: searchBtn.id,
+                                classes: searchBtn.className
+                            };
+                        }
+                        return { success: false };
                     }
                 """)
                 
-                print(f"  [DEBUG] Attempt {attempt}/{max_attempts}:")
-                print(f"    - Flights found: {flight_info['flightCount']}")
-                print(f"    - No flights message: {flight_info['hasNoFlightsMessage']}")
-                print(f"    - Loading indicator: {flight_info['isLoading']}")
-                print(f"    - Has search button: {flight_info['hasSearchButton']}")
-                
-                if flight_info['flightCount'] > 0:
-                    flights_found = True
-                    print(f"  [DEBUG] ✓ Found {flight_info['flightCount']} flights after {attempt * 5} seconds")
-                    break
-                
-                # If we see "no flights" message or hit 30 seconds, try refreshing
-                if (flight_info['hasNoFlightsMessage'] or attempt == 6) and not flights_found:
-                    print(f"  [DEBUG] Triggering page refresh to force data reload...")
-                    await page.reload(wait_until='networkidle')
-                    await page.wait_for_timeout(5000)
-                    
-                    # Take screenshot after refresh
-                    refresh_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_after_refresh.png")
-                    await page.screenshot(path=refresh_screenshot)
-                    print(f"  [DEBUG] Post-refresh screenshot: {refresh_screenshot}")
+                if js_clicked['success']:
+                    print(f"  [DEBUG] ✓ JavaScript click succeeded!")
+                    print(f"  [DEBUG] Button: text='{js_clicked['text']}', id='{js_clicked['id']}'")
+                    search_clicked = True
+                else:
+                    print(f"  [DEBUG] ✗ JavaScript click also failed")
             
-            if not flights_found:
-                print(f"  [DEBUG] ✗ No flights found after {max_attempts * 5} seconds")
-                # Take final screenshot for debugging
+            # Wait for results to load after clicking
+            if search_clicked:
+                print(f"  [DEBUG] Waiting 15 seconds for flight results to load...")
+                await page.wait_for_timeout(15000)
+                
+                # Take screenshot after search
+                post_search_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_after_search.png")
+                await page.screenshot(path=post_search_screenshot)
+                print(f"  [DEBUG] Post-search screenshot: {post_search_screenshot}")
+            else:
+                print(f"  [DEBUG] No search button clicked, trying page reload...")
+                await page.reload(wait_until='networkidle')
+                await page.wait_for_timeout(10000)
+            
+            # Check for flights
+            print(f"  [DEBUG] Checking for flight results...")
+            flight_count = await page.evaluate("""
+                () => {
+                    const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
+                    return containers.length;
+                }
+            """)
+            
+            print(f"  [DEBUG] Found {flight_count} flight containers")
+            
+            if flight_count == 0:
+                print(f"  [DEBUG] Still no flights, saving debug info...")
+                # Save final state
                 final_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_final.png")
                 await page.screenshot(path=final_screenshot)
                 print(f"  [DEBUG] Final screenshot: {final_screenshot}")
                 
-                # Get page HTML for debugging
                 html_content = await page.content()
                 html_path = os.path.join(screenshot_dir, f"{origin}_{destination}_page.html")
                 with open(html_path, 'w', encoding='utf-8') as f:
