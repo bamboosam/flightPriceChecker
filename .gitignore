@@ -34,6 +34,9 @@ wheels/
 *.log
 cron.log
 
+# Debug
+debug_screenshots/
+
 # IDE
 .vscode/
 .idea/

@@ -30,7 +30,22 @@ async def check_flight_price(origin, destination, date):
         
         try:
             # Navigate to search results
+            print(f"  [DEBUG] Navigating to: {url}")
             await page.goto(url, wait_until='networkidle')
+            print(f"  [DEBUG] Page loaded, network idle")
+            
+            # Take initial screenshot
+            screenshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_screenshots")
+            os.makedirs(screenshot_dir, exist_ok=True)
+            screenshot_path = os.path.join(screenshot_dir, f"{origin}_{destination}_initial.png")
+            await page.screenshot(path=screenshot_path)
+            print(f"  [DEBUG] Screenshot saved: {screenshot_path}")
+            
+            # Check page title and URL
+            page_title = await page.title()
+            current_url = page.url
+            print(f"  [DEBUG] Page title: {page_title}")
+            print(f"  [DEBUG] Current URL: {current_url}")
             
             # Poll for flights to appear (they load asynchronously)
             print(f"  [DEBUG] Waiting for flights to load...")
@@ -43,21 +58,59 @@ async def check_flight_price(origin, destination, date):
                 await page.wait_for_timeout(5000)  # Wait 5 seconds between checks
                 
                 # Check if flights are loaded
-                flight_count = await page.evaluate("""
+                flight_info = await page.evaluate("""
                     () => {
                         const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
-                        return containers.length;
+                        const noFlightsMsg = document.querySelector('[class*="NoFlight"], [class*="no-flight"], .empty-state');
+                        const loadingIndicator = document.querySelector('[class*="Loading"], [class*="loading"], [class*="spinner"]');
+                        
+                        return {
+                            flightCount: containers.length,
+                            hasNoFlightsMessage: !!noFlightsMsg,
+                            noFlightsText: noFlightsMsg?.textContent || '',
+                            isLoading: !!loadingIndicator,
+                            bodyClasses: document.body.className,
+                            hasSearchButton: !!document.querySelector('button:has-text("Search"), button[type="submit"]')
+                        };
                     }
                 """)
                 
-                if flight_count > 0:
+                print(f"  [DEBUG] Attempt {attempt}/{max_attempts}:")
+                print(f"    - Flights found: {flight_info['flightCount']}")
+                print(f"    - No flights message: {flight_info['hasNoFlightsMessage']}")
+                print(f"    - Loading indicator: {flight_info['isLoading']}")
+                print(f"    - Has search button: {flight_info['hasSearchButton']}")
+                
+                if flight_info['flightCount'] > 0:
                     flights_found = True
-                    print(f"  [DEBUG] Found {flight_count} flights after {attempt * 5} seconds")
-                else:
-                    print(f"  [DEBUG] Attempt {attempt}/{max_attempts}: No flights yet, waiting...")
+                    print(f"  [DEBUG] ✓ Found {flight_info['flightCount']} flights after {attempt * 5} seconds")
+                    break
+                
+                # If we see "no flights" message or hit 30 seconds, try refreshing
+                if (flight_info['hasNoFlightsMessage'] or attempt == 6) and not flights_found:
+                    print(f"  [DEBUG] Triggering page refresh to force data reload...")
+                    await page.reload(wait_until='networkidle')
+                    await page.wait_for_timeout(5000)
+                    
+                    # Take screenshot after refresh
+                    refresh_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_after_refresh.png")
+                    await page.screenshot(path=refresh_screenshot)
+                    print(f"  [DEBUG] Post-refresh screenshot: {refresh_screenshot}")
             
             if not flights_found:
-                print(f"  [DEBUG] No flights found after {max_attempts * 5} seconds")
+                print(f"  [DEBUG] ✗ No flights found after {max_attempts * 5} seconds")
+                # Take final screenshot for debugging
+                final_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_final.png")
+                await page.screenshot(path=final_screenshot)
+                print(f"  [DEBUG] Final screenshot: {final_screenshot}")
+                
+                # Get page HTML for debugging
+                html_content = await page.content()
+                html_path = os.path.join(screenshot_dir, f"{origin}_{destination}_page.html")
+                with open(html_path, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                print(f"  [DEBUG] Page HTML saved: {html_path}")
+
 
             
             # Extract prices using JavaScript
