@@ -23,6 +23,23 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+      
       - name: Install PyYAML for config reading
         run: pip install pyyaml
       
@@ -39,8 +56,13 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install playwright
+          pip install playwright pyyaml
           playwright install chromium --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      
+      - name: Install Playwright only (if cached)
+        run: pip install playwright pyyaml
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
       
       - name: Check flight prices
         run: python3 check_prices.py
