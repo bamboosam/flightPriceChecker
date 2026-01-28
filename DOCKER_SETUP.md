@@ -20,7 +20,7 @@ sudo apt-get install docker.io docker-compose
 
 ```bash
 cd /home/bamboosam/AI\ Coding/flightPriceChecker
-docker-compose build
+docker compose build
 ```
 
 This will:
@@ -43,12 +43,12 @@ routes:
 
 **One-time run:**
 ```bash
-docker-compose run --rm flight-checker
+docker compose run --rm flight-checker
 ```
 
 **Run and view output:**
 ```bash
-docker-compose run --rm flight-checker python3 check_prices.py
+docker compose run --rm flight-checker python3 check_prices.py
 ```
 
 ## Scheduled Runs
@@ -62,7 +62,7 @@ command: sh -c "while true; do python3 check_prices.py && sleep 86400; done"
 
 Then run as a service:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This will run the checker every 24 hours (86400 seconds).
@@ -76,7 +76,7 @@ crontab -e
 
 Add this line (runs daily at 8 AM):
 ```cron
-0 8 * * * cd /home/bamboosam/AI\ Coding/flightPriceChecker && docker-compose run --rm flight-checker >> cron.log 2>&1
+0 8 * * * cd /home/bamboosam/AI\ Coding/flightPriceChecker && docker compose run --rm flight-checker >> cron.log 2>&1
 ```
 
 ### Option 3: Custom Schedule Script
@@ -88,7 +88,7 @@ cd /home/bamboosam/AI\ Coding/flightPriceChecker
 
 while true; do
     echo "Running price check at $(date)"
-    docker-compose run --rm flight-checker
+    docker compose run --rm flight-checker
     
     # Wait 24 hours (or customize)
     sleep 86400
@@ -126,34 +126,34 @@ tail -f cron.log
 
 ### Rebuild After Code Changes
 ```bash
-docker-compose build --no-cache
+docker compose build --no-cache
 ```
 
 ### Stop Running Service
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Run with Custom Config
 ```bash
-docker-compose run --rm -v ./custom-config.yml:/app/config.yml flight-checker
+docker compose run --rm -v ./custom-config.yml:/app/config.yml flight-checker
 ```
 
 ### Interactive Shell (for debugging)
 ```bash
-docker-compose run --rm flight-checker /bin/bash
+docker compose run --rm flight-checker /bin/bash
 ```
 
 ### Clean Up
 ```bash
 # Remove containers
-docker-compose down
+docker compose down
 
 # Remove images
-docker-compose down --rmi all
+docker compose down --rmi all
 
 # Remove volumes
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Advantages of Docker
@@ -194,12 +194,12 @@ sudo chown -R $USER:$USER .
 
 ```bash
 # Check logs
-docker-compose logs
+docker compose logs
 
 # Rebuild from scratch
-docker-compose down
-docker-compose build --no-cache
-docker-compose up
+docker compose down
+docker compose build --no-cache
+docker compose up
 ```
 
 ## Testing
@@ -207,7 +207,7 @@ docker-compose up
 Test the setup:
 ```bash
 # Run once
-docker-compose run --rm flight-checker
+docker compose run --rm flight-checker
 
 # Check if it worked
 cat price_history.json
@@ -221,7 +221,7 @@ You should see:
 
 ## Next Steps
 
-1. Test with `docker-compose run --rm flight-checker`
+1. Test with `docker compose run --rm flight-checker`
 2. Check if Cloudflare is bypassed (look for flight prices)
 3. Set up scheduled runs using your preferred method
 4. Monitor `price_history.json` for results
