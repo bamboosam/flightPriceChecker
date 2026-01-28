@@ -59,14 +59,14 @@ async def check_flight_price(origin, destination, date):
                 page_title = await page.title()
                 print(f"  [DEBUG] New page title: {page_title}")
             
-            # Look for search button
+            # Look for search button (it's actually an <a> tag with id="home_Search")
             print(f"  [DEBUG] Looking for search button...")
             
-            # Try to find and click search button (increase timeout)
+            # Try to find and click search button using the correct ID
             try:
-                search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=20000, state='visible')
+                search_btn = await page.wait_for_selector('#home_Search', timeout=20000, state='visible')
                 if search_btn:
-                    print(f"  [DEBUG] Found search button, clicking...")
+                    print(f"  [DEBUG] Found search button (#home_Search), clicking...")
                     await search_btn.click()
                     print(f"  [DEBUG] Waiting for results...")
                     await page.wait_for_timeout(20000)  # Wait 20 seconds for results
