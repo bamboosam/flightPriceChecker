@@ -62,19 +62,17 @@ async def check_flight_price(origin, destination, date):
             # Look for search button
             print(f"  [DEBUG] Looking for search button...")
             
-            # Wait for page to be interactive
-            await page.wait_for_load_state('networkidle', timeout=30000)
-            
-            # Try to find and click search button
+            # Try to find and click search button (increase timeout)
             try:
-                search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=10000)
+                search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=20000, state='visible')
                 if search_btn:
                     print(f"  [DEBUG] Found search button, clicking...")
                     await search_btn.click()
                     print(f"  [DEBUG] Waiting for results...")
-                    await page.wait_for_timeout(15000)
+                    await page.wait_for_timeout(20000)  # Wait 20 seconds for results
             except Exception as e:
-                print(f"  [DEBUG] No search button found or click failed: {e}")
+                print(f"  [DEBUG] No search button found or click failed, trying to extract anyway...")
+                await page.wait_for_timeout(10000)  # Wait a bit more
             
             # Extract prices
             print(f"  [DEBUG] Extracting prices...")
