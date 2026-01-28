@@ -25,8 +25,40 @@ async def check_flight_price(origin, destination, date):
     url = f"https://www.airasia.com/flights/search/?origin={origin}&destination={destination}&departDate={date.replace('/', '%2F')}&tripType=O&adult=1&locale=en-gb&currency=THB"
     
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        # Launch browser with stealth mode to bypass Cloudflare
+        print(f"  [DEBUG] Launching browser with stealth mode...")
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',  # Hide automation
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+            ]
+        )
+        
+        # Create context with realistic user agent and settings
+        context = await browser.new_context(
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            viewport={'width': 1920, 'height': 1080},
+            locale='en-GB',
+            timezone_id='Asia/Bangkok',
+            extra_http_headers={
+                'Accept-Language': 'en-GB,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            }
+        )
+        
+        # Hide webdriver property
+        await context.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+        """)
+        
+        page = await context.new_page()
         
         try:
             # Navigate to search results
@@ -50,6 +82,29 @@ async def check_flight_price(origin, destination, date):
             current_url = page.url
             print(f"  [DEBUG] Page title: {page_title}")
             print(f"  [DEBUG] Current URL: {current_url}")
+            
+            # Check for Cloudflare challenge
+            if "just a moment" in page_title.lower() or "cloudflare" in page_title.lower():
+                print(f"  [DEBUG] ⚠ Cloudflare challenge detected! Waiting for it to resolve...")
+                try:
+                    # Wait up to 30 seconds for Cloudflare to pass
+                    await page.wait_for_function(
+                        "document.title.toLowerCase().indexOf('just a moment') === -1",
+                        timeout=30000
+                    )
+                    print(f"  [DEBUG] ✓ Cloudflare challenge passed!")
+                    await page.wait_for_timeout(3000)  # Extra wait for page to stabilize
+                    
+                    # Update page info
+                    page_title = await page.title()
+                    print(f"  [DEBUG] New page title: {page_title}")
+                except Exception as cf_error:
+                    print(f"  [DEBUG] ✗ Cloudflare challenge failed: {cf_error}")
+                    print(f"  [DEBUG] This might be a bot detection issue")
+                    # Take screenshot of Cloudflare page
+                    cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare.png")
+                    await page.screenshot(path=cf_screenshot)
+                    print(f"  [DEBUG] Cloudflare screenshot: {cf_screenshot}")
             
             # CRITICAL: Find and click the search button
             print(f"  [DEBUG] Looking for search button...")
@@ -206,6 +261,7 @@ async def check_flight_price(origin, destination, date):
                 }
             """)
             
+            await context.close()
             await browser.close()
             
             return {
@@ -224,6 +280,7 @@ async def check_flight_price(origin, destination, date):
             traceback.print_exc()
             
             try:
+                await context.close()
                 await browser.close()
             except:
                 pass
