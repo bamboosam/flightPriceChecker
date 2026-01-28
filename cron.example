@@ -1,0 +1,22 @@
+# Example Cron Configuration for Flight Price Checker
+
+# Run every day at 8:00 AM
+0 8 * * * cd /home/bamboosam/AI\ Coding/flightPriceChecker && /usr/bin/python3 check_prices.py >> /home/bamboosam/AI\ Coding/flightPriceChecker/cron.log 2>&1
+
+# Alternative schedules:
+
+# Run every day at 8:00 PM (20:00)
+# 0 20 * * * cd /home/bamboosam/AI\ Coding/flightPriceChecker && /usr/bin/python3 check_prices.py >> /home/bamboosam/AI\ Coding/flightPriceChecker/cron.log 2>&1
+
+# Run twice daily (8 AM and 8 PM)
+# 0 8,20 * * * cd /home/bamboosam/AI\ Coding/flightPriceChecker && /usr/bin/python3 check_prices.py >> /home/bamboosam/AI\ Coding/flightPriceChecker/cron.log 2>&1
+
+# Run every Monday at 8 AM
+# 0 8 * * 1 cd /home/bamboosam/AI\ Coding/flightPriceChecker && /usr/bin/python3 check_prices.py >> /home/bamboosam/AI\ Coding/flightPriceChecker/cron.log 2>&1
+
+# Cron format: minute hour day month weekday command
+# minute: 0-59
+# hour: 0-23
+# day: 1-31
+# month: 1-12
+# weekday: 0-7 (0 and 7 are Sunday)

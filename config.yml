@@ -1,0 +1,43 @@
+# Flight Price Checker Configuration
+
+# Schedule Configuration
+# Cron format: minute hour day month weekday
+# Times are in UTC (Bangkok is UTC+7)
+# Example: '0 1 * * *' = 8:00 AM Bangkok time (1:00 AM UTC)
+
+schedule:
+  # Default: Daily at 8 AM Bangkok time
+  cron: '0 1 * * *'
+  
+  # Common schedules (uncomment to use):
+  # cron: '0 13 * * *'      # Daily at 8 PM Bangkok time
+  # cron: '0 1,13 * * *'    # Twice daily: 8 AM and 8 PM
+  # cron: '0 1 * * 1'       # Every Monday at 8 AM
+  # cron: '0 1 * * 1,3,5'   # Mon, Wed, Fri at 8 AM
+
+# Flight Routes to Monitor
+routes:
+  - origin: KOP
+    destination: DMK
+    date: '04/04/2026'
+    
+  - origin: DMK
+    destination: KOP
+    date: '05/05/2026'
+
+# Notification Settings (optional)
+notifications:
+  telegram:
+    enabled: false
+    # Get bot token from @BotFather on Telegram
+    # Add as GitHub secret: TELEGRAM_BOT_TOKEN
+    # bot_token: 'YOUR_BOT_TOKEN'
+    
+    # Get chat ID by messaging @userinfobot
+    # Add as GitHub secret: TELEGRAM_CHAT_ID
+    # chat_id: 'YOUR_CHAT_ID'
+  
+  email:
+    enabled: false
+    # GitHub Actions will email you on workflow failures by default
+    # Enable in: GitHub Profile → Settings → Notifications → Actions
