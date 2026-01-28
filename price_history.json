@@ -17,5 +17,24 @@
         "timestamp": "2026-01-28T09:40:21.245730"
       }
     ]
+  },
+  {
+    "check_time": "2026-01-28T09:45:34.741176",
+    "results": [
+      {
+        "route": "KOP \u2192 DMK",
+        "date": "04/04/2026",
+        "flights": [],
+        "cheapest": null,
+        "timestamp": "2026-01-28T09:45:16.794046"
+      },
+      {
+        "route": "DMK \u2192 KOP",
+        "date": "05/05/2026",
+        "flights": [],
+        "cheapest": null,
+        "timestamp": "2026-01-28T09:45:34.734003"
+      }
+    ]
   }
 ]
