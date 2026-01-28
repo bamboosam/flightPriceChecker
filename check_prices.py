@@ -33,19 +33,33 @@ async def check_flight_price(origin, destination, date):
             await page.goto(url)
             await page.wait_for_timeout(10000)  # Wait 10 seconds
             
-            # Click search button if needed (troubleshooting)
-            try:
-                search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=5000)
-                await search_btn.click()
-                await page.wait_for_timeout(10000)
-            except:
-                pass  # Search button not needed
+            # Check if flights are loaded
+            flights_loaded = await page.evaluate("""
+                () => {
+                    const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
+                    return containers.length > 0;
+                }
+            """)
+            
+            # If no flights found, click search button to trigger data fetch
+            if not flights_loaded:
+                print(f"  [DEBUG] No flights initially loaded, clicking search button...")
+                try:
+                    # Look for the green Search button
+                    search_btn = await page.wait_for_selector('button:has-text("Search")', timeout=5000)
+                    await search_btn.click()
+                    print(f"  [DEBUG] Search button clicked, waiting for results...")
+                    await page.wait_for_timeout(10000)  # Wait another 10 seconds
+                except Exception as e:
+                    print(f"  [DEBUG] Could not click search button: {e}")
             
             # Extract prices using JavaScript
             prices = await page.evaluate("""
                 () => {
                     const flights = [];
                     const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
+                    
+                    console.log(`Found ${containers.length} flight containers`);
                     
                     containers.forEach(container => {
                         const priceEl = container.querySelector('[class*="Price"] [class*="gBxbny"]');
