@@ -46,7 +46,7 @@ async def check_flight_price(origin, destination, date):
             print(f"  [DEBUG] Page loaded")
             
             # Wait a bit for page to settle
-            await page.wait_for_timeout(5000)
+            await page.wait_for_timeout(20000)
             
             # Check page title
             page_title = await page.title()
