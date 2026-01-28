@@ -31,8 +31,12 @@ async def check_flight_price(origin, destination, date):
         try:
             # Navigate to search results
             print(f"  [DEBUG] Navigating to: {url}")
-            await page.goto(url, wait_until='networkidle')
-            print(f"  [DEBUG] Page loaded, network idle")
+            try:
+                await page.goto(url, wait_until='networkidle', timeout=60000)  # 60 second timeout
+                print(f"  [DEBUG] Page loaded, network idle")
+            except Exception as nav_error:
+                print(f"  [DEBUG] Navigation warning: {nav_error}")
+                print(f"  [DEBUG] Continuing anyway...")
             
             # Take initial screenshot
             screenshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_screenshots")
@@ -153,11 +157,22 @@ async def check_flight_price(origin, destination, date):
             }
             
         except Exception as e:
-            await browser.close()
+            print(f"  [ERROR] Exception occurred: {type(e).__name__}")
+            print(f"  [ERROR] Error message: {str(e)}")
+            import traceback
+            print(f"  [ERROR] Traceback:")
+            traceback.print_exc()
+            
+            try:
+                await browser.close()
+            except:
+                pass
+            
             return {
                 "route": f"{origin} → {destination}",
                 "date": date,
                 "error": str(e),
+                "error_type": type(e).__name__,
                 "timestamp": datetime.now().isoformat()
             }
 
