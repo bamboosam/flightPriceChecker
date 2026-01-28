@@ -85,17 +85,22 @@ async def check_flight_price(origin, destination, date):
                         const priceEl = container.querySelector('[class*="Price"] [class*="gBxbny"]');
                         const times = container.querySelectorAll('[class*="Text"][class*="hBKgBd"], [class*="Text"][class*="eQIcKu"]');
                         
-                        if (priceEl) {
-                            const price = parseInt(priceEl.textContent.replace(/,/g, ''));
+                        // Only add if we have a price AND valid times
+                        if (priceEl && times.length >= 2) {
                             const departTime = times[0]?.textContent.trim() || '';
                             const arriveTime = times[1]?.textContent.trim() || '';
                             
-                            flights.push({
-                                price: price,
-                                currency: 'THB',
-                                departTime: departTime,
-                                arriveTime: arriveTime
-                            });
+                            // Filter out empty times
+                            if (departTime && arriveTime) {
+                                const price = parseInt(priceEl.textContent.replace(/,/g, ''));
+                                
+                                flights.push({
+                                    price: price,
+                                    currency: 'THB',
+                                    departTime: departTime,
+                                    arriveTime: arriveTime
+                                });
+                            }
                         }
                     });
                     
