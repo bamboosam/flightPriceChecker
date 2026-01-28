@@ -107,7 +107,17 @@ async def check_flight_price(origin, destination, date):
                     print(f"  [DEBUG] Cloudflare screenshot: {cf_screenshot}")
             
             # CRITICAL: Find and click the search button
+            print(f"  [DEBUG] Waiting 10 seconds before searching...")
+            await page.wait_for_timeout(10000)
             print(f"  [DEBUG] Looking for search button...")
+            
+            # Dismiss any login popup that might be covering the search button
+            try:
+                await page.keyboard.press('Escape')
+                await page.wait_for_timeout(500)
+                print(f"  [DEBUG] Pressed Escape to dismiss any popups")
+            except Exception as e:
+                pass
             
             # Strategy 1: Try to find all buttons on the page
             all_buttons = await page.evaluate("""
@@ -233,12 +243,46 @@ async def check_flight_price(origin, destination, date):
 
             
             # Extract prices using JavaScript
+            print(f"  [DEBUG] Clicking 'View details' buttons to expand flight info...")
+            view_details_clicked = await page.evaluate("""
+                () => {
+                    const viewDetailsButtons = document.querySelectorAll('p[type="small"]');
+                    let clicked = 0;
+                    viewDetailsButtons.forEach(btn => {
+                        if (btn.textContent.includes('View details')) {
+                            btn.click();
+                            clicked++;
+                        }
+                    });
+                    return clicked;
+                }
+            """)
+            print(f"  [DEBUG] Clicked {view_details_clicked} 'View details' buttons")
+            
+            # Wait for details to expand
+            await page.wait_for_timeout(5000)
+            
             prices = await page.evaluate("""
                 () => {
                     const flights = [];
+                    const uniqueKeys = new Set();
                     const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
                     
                     console.log(`Found ${containers.length} flight containers`);
+                    
+                    // First, collect ALL flight numbers from the entire page
+                    const allFlightNumbers = [];
+                    const allParagraphs = document.querySelectorAll('p');
+                    for (const p of allParagraphs) {
+                        const text = p.textContent.trim();
+                        const match = text.match(/([A-Z]{2})\s*(\d{3,4})/);
+                        if (match && text.toLowerCase().includes('air')) {
+                            const flightNum = `${match[1]} ${match[2]}`;
+                            allFlightNumbers.push(flightNum);
+                        }
+                    }
+                    
+                    let flightIndex = 0;
                     
                     containers.forEach(container => {
                         const priceEl = container.querySelector('[class*="Price"] [class*="gBxbny"]');
@@ -249,11 +293,23 @@ async def check_flight_price(origin, destination, date):
                             const departTime = times[0]?.textContent.trim() || '';
                             const arriveTime = times[1]?.textContent.trim() || '';
                             
-                            flights.push({
-                                price: price,
-                                departTime: departTime,
-                                arriveTime: arriveTime
-                            });
+                            // Deduplicate based on price and times ONLY (not flight number)
+                            const key = `${price}-${departTime}-${arriveTime}`;
+                            
+                            if (!uniqueKeys.has(key)) {
+                                uniqueKeys.add(key);
+                                
+                                // Assign flight number by index if available
+                                const flightNum = flightIndex < allFlightNumbers.length ? allFlightNumbers[flightIndex] : "N/A";
+                                
+                                flights.push({
+                                    flightNumber: flightNum,
+                                    price: price,
+                                    departTime: departTime,
+                                    arriveTime: arriveTime
+                                });
+                                flightIndex++;
+                            }
                         }
                     });
                     

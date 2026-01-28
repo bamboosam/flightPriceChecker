@@ -19,12 +19,8 @@ schedule:
 routes:
   - origin: KOP
     destination: DMK
-    date: '04/04/2026'
+    date: '03/02/2026'
     
-  - origin: DMK
-    destination: KOP
-    date: '05/05/2026'
-
 # Notification Settings (optional)
 notifications:
   telegram:

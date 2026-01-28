@@ -1,131 +1,44 @@
 [
   {
-    "check_time": "2026-01-28T09:40:21.253098",
-    "results": [
+    "route": "KOP \u2192 DMK",
+    "date": "03/02/2026",
+    "flights": [
       {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:40:02.307583"
+        "flightNumber": "FD 3399",
+        "price": 950,
+        "currency": "THB",
+        "departTime": "09:10",
+        "arriveTime": "10:15"
       },
       {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:40:21.245730"
-      }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T09:45:34.741176",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:45:16.794046"
+        "flightNumber": "FD 3395",
+        "price": 1150,
+        "currency": "THB",
+        "departTime": "20:10",
+        "arriveTime": "21:20"
       },
       {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:45:34.734003"
-      }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T09:57:07.847621",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:56:49.197290"
+        "flightNumber": "FD 3343",
+        "price": 1650,
+        "currency": "THB",
+        "departTime": "12:45",
+        "arriveTime": "13:50"
       },
       {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T09:57:07.839645"
+        "flightNumber": "FD 3397",
+        "price": 1650,
+        "currency": "THB",
+        "departTime": "16:55",
+        "arriveTime": "18:05"
       }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T10:07:00.941889",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "error": "Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.airasia.com/flights/search/?origin=KOP&destination=DMK&departDate=04%2F04%2F2026&tripType=O&adult=1&locale=en-gb&currency=THB\", waiting until \"networkidle\"\n",
-        "timestamp": "2026-01-28T10:06:30.506017"
-      },
-      {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "error": "Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.airasia.com/flights/search/?origin=DMK&destination=KOP&departDate=05%2F05%2F2026&tripType=O&adult=1&locale=en-gb&currency=THB\", waiting until \"networkidle\"\n",
-        "timestamp": "2026-01-28T10:07:00.933635"
-      }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T10:27:40.967636",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "error": "Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.airasia.com/flights/search/?origin=KOP&destination=DMK&departDate=04%2F04%2F2026&tripType=O&adult=1&locale=en-gb&currency=THB\", waiting until \"networkidle\"\n",
-        "timestamp": "2026-01-28T10:27:10.566838"
-      },
-      {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "error": "Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.airasia.com/flights/search/?origin=DMK&destination=KOP&departDate=05%2F05%2F2026&tripType=O&adult=1&locale=en-gb&currency=THB\", waiting until \"networkidle\"\n",
-        "timestamp": "2026-01-28T10:27:40.960612"
-      }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T10:43:44.045519",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T10:42:00.287097"
-      },
-      {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T10:43:44.038486"
-      }
-    ]
-  },
-  {
-    "check_time": "2026-01-28T10:53:57.698114",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "04/04/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T10:51:43.658054"
-      },
-      {
-        "route": "DMK \u2192 KOP",
-        "date": "05/05/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T10:53:57.691115"
-      }
-    ]
+    ],
+    "cheapest": {
+      "flightNumber": "FD 3399",
+      "price": 950,
+      "currency": "THB",
+      "departTime": "09:10",
+      "arriveTime": "10:15"
+    },
+    "timestamp": "2026-01-28T21:24:57.801019"
   }
 ]

@@ -46,7 +46,7 @@ async def check_flight_price(origin, destination, date):
             print(f"  [DEBUG] Page loaded")
             
             # Wait a bit for page to settle
-            await page.wait_for_timeout(20000)
+            await page.wait_for_timeout(10000)
             
             # Check page title
             page_title = await page.title()
@@ -62,6 +62,15 @@ async def check_flight_price(origin, destination, date):
             # Look for search button (it's actually an <a> tag with id="home_Search")
             print(f"  [DEBUG] Looking for search button...")
             
+            # Dismiss any login popup that might be covering the search button
+            try:
+                # Press Escape key to close any popups
+                await page.keyboard.press('Escape')
+                await page.wait_for_timeout(500)
+                print(f"  [DEBUG] Pressed Escape to dismiss any popups")
+            except Exception as e:
+                pass
+            
             # Try to find and click search button using the correct ID
             try:
                 search_btn = await page.wait_for_selector('#home_Search', timeout=20000, state='visible')
@@ -69,17 +78,59 @@ async def check_flight_price(origin, destination, date):
                     print(f"  [DEBUG] Found search button (#home_Search), clicking...")
                     await search_btn.click()
                     print(f"  [DEBUG] Waiting for results...")
-                    await page.wait_for_timeout(20000)  # Wait 20 seconds for results
+            # Wait 10 seconds for results
+                    await page.wait_for_timeout(10000)  
             except Exception as e:
                 print(f"  [DEBUG] No search button found or click failed, trying to extract anyway...")
                 await page.wait_for_timeout(10000)  # Wait a bit more
             
             # Extract prices
             print(f"  [DEBUG] Extracting prices...")
+            
+            # First, click all "View details" buttons to expand flight information
+            print(f"  [DEBUG] Clicking 'View details' buttons to expand flight info...")
+            view_details_clicked = await page.evaluate("""
+                () => {
+                    const viewDetailsButtons = document.querySelectorAll('p[type="small"]');
+                    let clicked = 0;
+                    viewDetailsButtons.forEach(btn => {
+                        if (btn.textContent.includes('View details')) {
+                            btn.click();
+                            clicked++;
+                        }
+                    });
+                    return clicked;
+                }
+            """)
+            print(f"  [DEBUG] Clicked {view_details_clicked} 'View details' buttons")
+            
+            # Wait for details to expand
+            await page.wait_for_timeout(1000)
+            
             prices = await page.evaluate("""
                 () => {
                     const flights = [];
+                    const uniqueKeys = new Set();
+                    const debugInfo = [];
+                    
+                    // First, collect ALL flight numbers from the entire page
+                    const allFlightNumbers = [];
+                    const allParagraphs = document.querySelectorAll('p');
+                    for (const p of allParagraphs) {
+                        const text = p.textContent.trim();
+                        const match = text.match(/([A-Z]{2})\s*(\d{3,4})/);
+                        if (match && text.toLowerCase().includes('air')) {
+                            const flightNum = `${match[1]} ${match[2]}`;
+                            allFlightNumbers.push(flightNum);
+                            debugInfo.push(`Found flight number: ${flightNum}`);
+                        }
+                    }
+                    
+                    debugInfo.push(`Total flight numbers found: ${allFlightNumbers.length}`);
+                    
+                    // Now collect flight containers with prices and times
                     const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
+                    let flightIndex = 0;
                     
                     containers.forEach(container => {
                         const priceEl = container.querySelector('[class*="Price"] [class*="gBxbny"]');
@@ -94,20 +145,42 @@ async def check_flight_price(origin, destination, date):
                             if (departTime && arriveTime) {
                                 const price = parseInt(priceEl.textContent.replace(/,/g, ''));
                                 
-                                flights.push({
-                                    price: price,
-                                    currency: 'THB',
-                                    departTime: departTime,
-                                    arriveTime: arriveTime
-                                });
+                                // Deduplicate based on price and times ONLY (not flight number)
+                                const key = `${price}-${departTime}-${arriveTime}`;
+                                
+                                if (!uniqueKeys.has(key)) {
+                                    uniqueKeys.add(key);
+                                    
+                                    // Assign flight number by index if available
+                                    const flightNum = flightIndex < allFlightNumbers.length ? allFlightNumbers[flightIndex] : "N/A";
+                                    
+                                    flights.push({
+                                        flightNumber: flightNum,
+                                        price: price,
+                                        currency: 'THB',
+                                        departTime: departTime,
+                                        arriveTime: arriveTime
+                                    });
+                                    flightIndex++;
+                                }
                             }
                         }
                     });
                     
-                    return flights.sort((a, b) => a.price - b.price);
+                    return {
+                        flights: flights.sort((a, b) => a.price - b.price),
+                        debug: debugInfo
+                    };
                 }
             """)
             
+            # Print debug info
+            if 'debug' in prices:
+                for msg in prices['debug']:
+                    print(f"  [DEBUG JS] {msg}")
+                prices = prices['flights']
+            else:
+                prices = prices if isinstance(prices, list) else []
             if prices:
                 print(f"  ✓ Found {len(prices)} flights")
                 print(f"  ✓ Cheapest: {prices[0]['currency']} {prices[0]['price']:,}")
@@ -177,21 +250,22 @@ async def main():
             flights = result['flights']
             print(f"  ✅ Found {len(flights)} flight(s)\n")
             
+            # Find the minimum price
+            min_price = min(f['price'] for f in flights)
+            # Check if all flights have the same price
+            all_same_price = len(set(f['price'] for f in flights)) == 1
+            
             for i, flight in enumerate(flights, 1):
-                is_cheapest = (i == 1)  # First flight is cheapest (already sorted)
+                # Show "CHEAPEST" for all flights with the minimum price (unless all same price)
+                is_cheapest = (flight['price'] == min_price) and not all_same_price
                 prefix = "  🌟 CHEAPEST" if is_cheapest else f"  {i}."
                 
                 print(f"{prefix}")
+                print(f"     Flight: {flight['flightNumber']}")
                 print(f"     Price: {flight['currency']} {flight['price']:,}")
                 print(f"     Depart: {flight['departTime']}")
                 print(f"     Arrive: {flight['arriveTime']}")
-                if not is_cheapest:
-                    print()
-            
-            # Summary
-            cheapest = flights[0]
-            print(f"\n  💰 Best Price: {cheapest['currency']} {cheapest['price']:,}")
-            print(f"     ({cheapest['departTime']} → {cheapest['arriveTime']})")
+                print()
         else:
             print(f"  ⚠️  No flights found")
     
