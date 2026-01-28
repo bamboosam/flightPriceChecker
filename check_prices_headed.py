@@ -159,17 +159,40 @@ async def main():
     print(f"\nResults saved to price_history.json")
     
     # Print summary
-    print("\n" + "="*50)
+    print("\n" + "="*70)
     print("FLIGHT PRICE CHECK RESULTS")
-    print("="*50)
+    print("="*70)
     for result in results:
-        print(f"{result['route']} on {result['date']}")
-        if result.get('cheapest'):
-            print(f"  Cheapest: {result['cheapest']['currency']} {result['cheapest']['price']:,}")
-        elif result.get('error'):
-            print(f"  Error: {result['error']}")
+        print(f"\n{result['route']} on {result['date']}")
+        print("-" * 70)
+        
+        if result.get('error'):
+            print(f"  ❌ Error: {result['error']}")
+        elif result.get('flights'):
+            flights = result['flights']
+            print(f"  ✅ Found {len(flights)} flight(s)\n")
+            
+            for i, flight in enumerate(flights, 1):
+                is_cheapest = (i == 1)  # First flight is cheapest (already sorted)
+                prefix = "  🌟 CHEAPEST" if is_cheapest else f"  {i}."
+                
+                print(f"{prefix}")
+                print(f"     Price: {flight['currency']} {flight['price']:,}")
+                print(f"     Depart: {flight['departTime']}")
+                print(f"     Arrive: {flight['arriveTime']}")
+                if not is_cheapest:
+                    print()
+            
+            # Summary
+            cheapest = flights[0]
+            print(f"\n  💰 Best Price: {cheapest['currency']} {cheapest['price']:,}")
+            print(f"     ({cheapest['departTime']} → {cheapest['arriveTime']})")
         else:
-            print(f"  No flights found")
+            print(f"  ⚠️  No flights found")
+    
+    print("\n" + "="*70)
+    print(f"Results saved to price_history.json")
+    print("="*70)
 
 if __name__ == "__main__":
     asyncio.run(main())
