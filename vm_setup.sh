@@ -78,7 +78,7 @@ echo "🧪 Testing Setup..."
 echo "=========================================="
 
 # Test Python
-./venv/bin/python3 -c "import pyautogui; print('✓ PyAutoGUI works')"
+xvfb-run -a ./venv/bin/python3 -c "import pyautogui; print('✓ PyAutoGUI works')"
 
 # Test Xvfb
 echo "✓ Testing Xvfb..."
