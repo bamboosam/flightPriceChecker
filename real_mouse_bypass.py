@@ -167,18 +167,17 @@ class RealMouseBypass:
         Click the Cloudflare checkbox using real mouse control
         
         Args:
-            page_x: X coordinate of checkbox within the page
-            page_y: Y coordinate of checkbox within the page
+            page_x: X coordinate of checkbox (treated as screen coordinate)
+            page_y: Y coordinate of checkbox (treated as screen coordinate)
             
         Returns:
             bool: True if click was performed, False otherwise
         """
         try:
-            # Convert page coordinates to screen coordinates
-            screen_x, screen_y = self.page_to_screen_coords(page_x, page_y)
+            # Use coordinates directly (they're already screen coordinates from xdotool)
+            screen_x, screen_y = page_x, page_y
             
             print(f"  [MOUSE] 🖱️  Taking control of your mouse!")
-            print(f"  [MOUSE] Page coords: ({page_x}, {page_y})")
             print(f"  [MOUSE] Screen coords: ({screen_x}, {screen_y})")
             print(f"  [MOUSE] ⚠️  Don't touch your mouse for 30 seconds...")
             
