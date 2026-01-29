@@ -99,43 +99,39 @@ async def check_flight_price(origin, destination, date):
                 os.makedirs(screenshot_dir, exist_ok=True)
                 cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare_realmouse.png")
                 
-                # Take screenshot
+                # Take screenshot for debugging
                 await page.screenshot(path=cf_screenshot)
+                print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
                 
-                # Find checkbox using OpenCV
-                checkbox_coords = await bypass.find_checkbox_in_screenshot(cf_screenshot)
+                # Use manually found checkbox coordinates (more reliable than OpenCV)
+                # Coordinates found using xdotool: (207, 397)
+                page_x, page_y = 207, 397
+                print(f"  [DEBUG] Using manual checkbox coords: ({page_x}, {page_y})")
                 
-                if checkbox_coords:
-                    page_x, page_y = checkbox_coords
-                    print(f"  [DEBUG] Found checkbox at page coords: ({page_x}, {page_y})")
+                # Use REAL MOUSE to click the checkbox
+                print(f"  [DEBUG] Taking control of your mouse in 2 seconds...")
+                await page.wait_for_timeout(2000)
+                
+                # Click with real mouse
+                success = real_mouse.click_checkbox(page_x, page_y)
+                
+                if success:
+                    print(f"  [DEBUG] ✓ Checkbox clicked with REAL mouse!")
+                    print(f"  [DEBUG] Waiting for challenge to resolve...")
                     
-                    # Use REAL MOUSE to click the checkbox
-                    print(f"  [DEBUG] Taking control of your mouse in 2 seconds...")
-                    await page.wait_for_timeout(2000)
+                    # Wait for challenge to complete
+                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
                     
-                    # Click with real mouse
-                    success = real_mouse.click_checkbox(page_x, page_y)
-                    
-                    if success:
-                        print(f"  [DEBUG] ✓ Checkbox clicked with REAL mouse!")
-                        print(f"  [DEBUG] Waiting for challenge to resolve...")
-                        
-                        # Wait for challenge to complete
-                        challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
-                        
-                        if challenge_passed:
-                            print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
-                            await page.wait_for_timeout(3000)
-                            page_title = await page.title()
-                            print(f"  [DEBUG] New page title: {page_title}")
-                        else:
-                            print(f"  [DEBUG] ✗ Challenge did not resolve")
-                            print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
+                    if challenge_passed:
+                        print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
+                        await page.wait_for_timeout(3000)
+                        page_title = await page.title()
+                        print(f"  [DEBUG] New page title: {page_title}")
                     else:
-                        print(f"  [DEBUG] ✗ Failed to click checkbox")
+                        print(f"  [DEBUG] ✗ Challenge did not resolve")
+                        print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
                 else:
-                    print(f"  [DEBUG] ✗ Could not find checkbox in screenshot")
-                    print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
+                    print(f"  [DEBUG] ✗ Failed to click checkbox")
             
             # Continue with normal flow...
             print(f"  [DEBUG] Looking for search button...")
