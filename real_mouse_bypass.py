@@ -28,8 +28,8 @@ class RealMouseBypass:
     
     def __init__(self):
         """Initialize PyAutoGUI with safety settings"""
-        # Safety: move mouse to corner to abort
-        pyautogui.FAILSAFE = True
+        # Safety: Disable fail-safe in virtual display to avoid (0,0) triggering it
+        pyautogui.FAILSAFE = False
         
         # Disable pauses for smoother movement
         pyautogui.PAUSE = 0
