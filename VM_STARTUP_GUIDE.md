@@ -6,7 +6,7 @@ Quick reference for starting VNC and running the price checker on your Debian 13
 
 Power on your VM and SSH into it:
 ```bash
-ssh bamboosam@192.168.122.146
+ssh bamboosam@192.168.122.145
 ```
 
 ## 2. Configure VNC for XFCE (First Time Only)
@@ -92,7 +92,6 @@ cd ~/flightPriceChecker
 for i in {1..10}; do 
   echo "========== Run $i/10 =========="
   DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
-  sleep 5
 done
 ```
 
