@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+"""
+Cloudflare Bypass with REAL Mouse Control
+
+This version uses PyAutoGUI to control the actual physical mouse cursor,
+generating trusted events that Cloudflare cannot detect.
+
+IMPORTANT: 
+- Browser will open at a FIXED position and size
+- Don't touch your mouse when Cloudflare appears
+- The script will take control of your mouse to click the checkbox
+"""
+
 import asyncio
 from playwright.async_api import async_playwright
 from datetime import datetime
@@ -5,28 +18,41 @@ import json
 import os
 import yaml
 from cloudflare_bypass import CloudflareBypass
+from real_mouse_bypass import RealMouseBypass
+
+# Fixed browser dimensions for consistent coordinate mapping
+BROWSER_WIDTH = 1280
+BROWSER_HEIGHT = 720
+BROWSER_X = 100  # Position on screen
+BROWSER_Y = 100
 
 async def check_flight_price(origin, destination, date):
-    """Check price for a single route using HEADED browser"""
+    """Check price for a single route using REAL MOUSE CONTROL"""
     url = f"https://www.airasia.com/flights/search/?origin={origin}&destination={destination}&departDate={date.replace('/', '%2F')}&tripType=O&adult=1&locale=en-gb&currency=THB"
     
+    # Initialize real mouse controller
+    real_mouse = RealMouseBypass()
+    real_mouse.set_browser_position(BROWSER_X, BROWSER_Y)
+    
     async with async_playwright() as p:
-        # Launch browser in HEADED mode (visible window)
-        print(f"  [DEBUG] Launching HEADED browser (visible window)...")
+        # Launch browser in HEADED mode with FIXED size and position
+        print(f"  [DEBUG] Launching HEADED browser at ({BROWSER_X}, {BROWSER_Y})...")
         browser = await p.chromium.launch(
-            headless=False,  # ← HEADED MODE
+            headless=False,  # ← HEADED MODE (visible)
             args=[
                 '--disable-blink-features=AutomationControlled',
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
+                f'--window-position={BROWSER_X},{BROWSER_Y}',
+                f'--window-size={BROWSER_WIDTH},{BROWSER_HEIGHT}',
             ]
         )
         
-        # Create context with realistic settings
+        # Create context with FIXED viewport
         context = await browser.new_context(
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            viewport={'width': 1920, 'height': 1080},
+            viewport={'width': BROWSER_WIDTH, 'height': BROWSER_HEIGHT},
             locale='en-GB',
             timezone_id='Asia/Bangkok',
         )
@@ -47,77 +73,89 @@ async def check_flight_price(origin, destination, date):
             print(f"  [DEBUG] Page loaded")
             
             # Wait a bit for page to settle
-            await page.wait_for_timeout(10000)
+            await page.wait_for_timeout(5000)
             
             # Check page title
             page_title = await page.title()
             print(f"  [DEBUG] Page title: {page_title}")
             
-            # Check for Cloudflare challenge and attempt bypass
+            # Check for Cloudflare challenge and attempt REAL MOUSE bypass
             bypass = CloudflareBypass(page)
             if await bypass.detect_challenge():
-                print(f"  [DEBUG] ⚠ Cloudflare challenge detected! Attempting bypass...")
-                print(f"  [DEBUG] 👀 WATCH THE BROWSER - You'll see the mouse move and click!")
+                print(f"  [DEBUG] ⚠ Cloudflare challenge detected!")
+                print(f"  [DEBUG] 🖱️  REAL MOUSE CONTROL MODE ACTIVATED!")
+                print(f"  [DEBUG] ⚠️  DON'T TOUCH YOUR MOUSE!")
                 
                 # Create screenshots directory
                 screenshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_screenshots")
                 os.makedirs(screenshot_dir, exist_ok=True)
-                cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare_headed.png")
+                cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare_realmouse.png")
                 
-                # Attempt to bypass the challenge (you'll see it happen!)
-                bypass_attempted = await bypass.attempt_bypass(cf_screenshot)
+                # Take screenshot
+                await page.screenshot(path=cf_screenshot)
                 
-                if bypass_attempted:
-                    print(f"  [DEBUG] Bypass attempt completed, waiting for challenge to resolve...")
+                # Find checkbox using OpenCV
+                checkbox_coords = await bypass.find_checkbox_in_screenshot(cf_screenshot)
+                
+                if checkbox_coords:
+                    page_x, page_y = checkbox_coords
+                    print(f"  [DEBUG] Found checkbox at page coords: ({page_x}, {page_y})")
                     
-                    # Wait for challenge to complete
-                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
+                    # Use REAL MOUSE to click the checkbox
+                    print(f"  [DEBUG] Taking control of your mouse in 2 seconds...")
+                    await page.wait_for_timeout(2000)
                     
-                    if challenge_passed:
-                        print(f"  [DEBUG] ✓ Cloudflare challenge passed!")
-                        await page.wait_for_timeout(3000)  # Extra wait for page to stabilize
+                    # Click with real mouse
+                    success = real_mouse.click_checkbox(page_x, page_y)
+                    
+                    if success:
+                        print(f"  [DEBUG] ✓ Checkbox clicked with REAL mouse!")
+                        print(f"  [DEBUG] Waiting for challenge to resolve...")
                         
-                        # Update page info
-                        page_title = await page.title()
-                        print(f"  [DEBUG] New page title: {page_title}")
+                        # Wait for challenge to complete
+                        challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
+                        
+                        if challenge_passed:
+                            print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
+                            await page.wait_for_timeout(3000)
+                            page_title = await page.title()
+                            print(f"  [DEBUG] New page title: {page_title}")
+                        else:
+                            print(f"  [DEBUG] ✗ Challenge did not resolve")
+                            print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
                     else:
-                        print(f"  [DEBUG] ✗ Cloudflare challenge did not resolve in time")
-                        print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
-                        print(f"  [DEBUG] 💡 TIP: The challenge might need additional interaction")
+                        print(f"  [DEBUG] ✗ Failed to click checkbox")
                 else:
-                    print(f"  [DEBUG] ✗ Could not attempt bypass (checkbox not found)")
+                    print(f"  [DEBUG] ✗ Could not find checkbox in screenshot")
                     print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
             
-            # Look for search button (it's actually an <a> tag with id="home_Search")
+            # Continue with normal flow...
             print(f"  [DEBUG] Looking for search button...")
             
-            # Dismiss any login popup that might be covering the search button
+            # Dismiss any popups
             try:
-                # Press Escape key to close any popups
                 await page.keyboard.press('Escape')
                 await page.wait_for_timeout(500)
                 print(f"  [DEBUG] Pressed Escape to dismiss any popups")
             except Exception as e:
                 pass
             
-            # Try to find and click search button using the correct ID
+            # Try to find and click search button
             try:
                 search_btn = await page.wait_for_selector('#home_Search', timeout=20000, state='visible')
                 if search_btn:
-                    print(f"  [DEBUG] Found search button (#home_Search), clicking...")
+                    print(f"  [DEBUG] Found search button, clicking...")
                     await search_btn.click()
                     print(f"  [DEBUG] Waiting for results...")
-            # Wait 10 seconds for results
-                    await page.wait_for_timeout(10000)  
+                    await page.wait_for_timeout(10000)
             except Exception as e:
-                print(f"  [DEBUG] No search button found or click failed, trying to extract anyway...")
-                await page.wait_for_timeout(10000)  # Wait a bit more
+                print(f"  [DEBUG] No search button found, trying to extract anyway...")
+                await page.wait_for_timeout(10000)
             
-            # Extract prices
+            # Extract prices (same as before)
             print(f"  [DEBUG] Extracting prices...")
             
-            # First, click all "View details" buttons to expand flight information
-            print(f"  [DEBUG] Clicking 'View details' buttons to expand flight info...")
+            # Click "View details" buttons
             view_details_clicked = await page.evaluate("""
                 () => {
                     const viewDetailsButtons = document.querySelectorAll('p[type="small"]');
@@ -133,16 +171,14 @@ async def check_flight_price(origin, destination, date):
             """)
             print(f"  [DEBUG] Clicked {view_details_clicked} 'View details' buttons")
             
-            # Wait for details to expand
             await page.wait_for_timeout(1000)
             
-            prices = await page.evaluate("""
+            # Extract flight data
+            prices = await page.evaluate(r"""
                 () => {
                     const flights = [];
                     const uniqueKeys = new Set();
-                    const debugInfo = [];
                     
-                    // First, collect ALL flight numbers from the entire page
                     const allFlightNumbers = [];
                     const allParagraphs = document.querySelectorAll('p');
                     for (const p of allParagraphs) {
@@ -151,13 +187,9 @@ async def check_flight_price(origin, destination, date):
                         if (match && text.toLowerCase().includes('air')) {
                             const flightNum = `${match[1]} ${match[2]}`;
                             allFlightNumbers.push(flightNum);
-                            debugInfo.push(`Found flight number: ${flightNum}`);
                         }
                     }
                     
-                    debugInfo.push(`Total flight numbers found: ${allFlightNumbers.length}`);
-                    
-                    // Now collect flight containers with prices and times
                     const containers = document.querySelectorAll('[class*="Journey"][class*="Container"]');
                     let flightIndex = 0;
                     
@@ -165,22 +197,16 @@ async def check_flight_price(origin, destination, date):
                         const priceEl = container.querySelector('[class*="Price"] [class*="gBxbny"]');
                         const times = container.querySelectorAll('[class*="Text"][class*="hBKgBd"], [class*="Text"][class*="eQIcKu"]');
                         
-                        // Only add if we have a price AND valid times
                         if (priceEl && times.length >= 2) {
                             const departTime = times[0]?.textContent.trim() || '';
                             const arriveTime = times[1]?.textContent.trim() || '';
                             
-                            // Filter out empty times
                             if (departTime && arriveTime) {
                                 const price = parseInt(priceEl.textContent.replace(/,/g, ''));
-                                
-                                // Deduplicate based on price and times ONLY (not flight number)
                                 const key = `${price}-${departTime}-${arriveTime}`;
                                 
                                 if (!uniqueKeys.has(key)) {
                                     uniqueKeys.add(key);
-                                    
-                                    // Assign flight number by index if available
                                     const flightNum = flightIndex < allFlightNumbers.length ? allFlightNumbers[flightIndex] : "N/A";
                                     
                                     flights.push({
@@ -196,27 +222,17 @@ async def check_flight_price(origin, destination, date):
                         }
                     });
                     
-                    return {
-                        flights: flights.sort((a, b) => a.price - b.price),
-                        debug: debugInfo
-                    };
+                    return flights.sort((a, b) => a.price - b.price);
                 }
             """)
             
-            # Print debug info
-            if 'debug' in prices:
-                for msg in prices['debug']:
-                    print(f"  [DEBUG JS] {msg}")
-                prices = prices['flights']
-            else:
-                prices = prices if isinstance(prices, list) else []
             if prices:
                 print(f"  ✓ Found {len(prices)} flights")
                 print(f"  ✓ Cheapest: {prices[0]['currency']} {prices[0]['price']:,}")
             else:
                 print(f"  ✗ No flights found")
             
-            # Keep browser open for 5 seconds so you can see the result
+            # Keep browser open for 5 seconds
             print(f"  [DEBUG] Keeping browser open for 5 seconds...")
             await page.wait_for_timeout(5000)
             
@@ -264,43 +280,6 @@ async def main():
         json.dump(results, f, indent=2)
     
     print(f"\nResults saved to price_history.json")
-    
-    # Print summary
-    print("\n" + "="*70)
-    print("FLIGHT PRICE CHECK RESULTS")
-    print("="*70)
-    for result in results:
-        print(f"\n{result['route']} on {result['date']}")
-        print("-" * 70)
-        
-        if result.get('error'):
-            print(f"  ❌ Error: {result['error']}")
-        elif result.get('flights'):
-            flights = result['flights']
-            print(f"  ✅ Found {len(flights)} flight(s)\n")
-            
-            # Find the minimum price
-            min_price = min(f['price'] for f in flights)
-            # Check if all flights have the same price
-            all_same_price = len(set(f['price'] for f in flights)) == 1
-            
-            for i, flight in enumerate(flights, 1):
-                # Show "CHEAPEST" for all flights with the minimum price (unless all same price)
-                is_cheapest = (flight['price'] == min_price) and not all_same_price
-                prefix = "  🌟 CHEAPEST" if is_cheapest else f"  {i}."
-                
-                print(f"{prefix}")
-                print(f"     Flight: {flight['flightNumber']}")
-                print(f"     Price: {flight['currency']} {flight['price']:,}")
-                print(f"     Depart: {flight['departTime']}")
-                print(f"     Arrive: {flight['arriveTime']}")
-                print()
-        else:
-            print(f"  ⚠️  No flights found")
-    
-    print("\n" + "="*70)
-    print(f"Results saved to price_history.json")
-    print("="*70)
 
 if __name__ == "__main__":
     asyncio.run(main())

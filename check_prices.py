@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import os
 import yaml
+from cloudflare_bypass import CloudflareBypass
 
 # Load configuration
 def load_config():
@@ -83,28 +84,36 @@ async def check_flight_price(origin, destination, date):
             print(f"  [DEBUG] Page title: {page_title}")
             print(f"  [DEBUG] Current URL: {current_url}")
             
-            # Check for Cloudflare challenge
-            if "just a moment" in page_title.lower() or "cloudflare" in page_title.lower():
-                print(f"  [DEBUG] ⚠ Cloudflare challenge detected! Waiting for it to resolve...")
-                try:
-                    # Wait up to 30 seconds for Cloudflare to pass
-                    await page.wait_for_function(
-                        "document.title.toLowerCase().indexOf('just a moment') === -1",
-                        timeout=30000
-                    )
-                    print(f"  [DEBUG] ✓ Cloudflare challenge passed!")
-                    await page.wait_for_timeout(3000)  # Extra wait for page to stabilize
+            # Check for Cloudflare challenge and attempt bypass
+            bypass = CloudflareBypass(page)
+            if await bypass.detect_challenge():
+                print(f"  [DEBUG] ⚠ Cloudflare challenge detected! Attempting bypass...")
+                
+                # Take screenshot for analysis
+                cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare.png")
+                
+                # Attempt to bypass the challenge
+                bypass_attempted = await bypass.attempt_bypass(cf_screenshot)
+                
+                if bypass_attempted:
+                    print(f"  [DEBUG] Bypass attempt completed, waiting for challenge to resolve...")
                     
-                    # Update page info
-                    page_title = await page.title()
-                    print(f"  [DEBUG] New page title: {page_title}")
-                except Exception as cf_error:
-                    print(f"  [DEBUG] ✗ Cloudflare challenge failed: {cf_error}")
-                    print(f"  [DEBUG] This might be a bot detection issue")
-                    # Take screenshot of Cloudflare page
-                    cf_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_cloudflare.png")
-                    await page.screenshot(path=cf_screenshot)
-                    print(f"  [DEBUG] Cloudflare screenshot: {cf_screenshot}")
+                    # Wait for challenge to complete
+                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
+                    
+                    if challenge_passed:
+                        print(f"  [DEBUG] ✓ Cloudflare challenge passed!")
+                        await page.wait_for_timeout(3000)  # Extra wait for page to stabilize
+                        
+                        # Update page info
+                        page_title = await page.title()
+                        print(f"  [DEBUG] New page title: {page_title}")
+                    else:
+                        print(f"  [DEBUG] ✗ Cloudflare challenge did not resolve in time")
+                        print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
+                else:
+                    print(f"  [DEBUG] ✗ Could not attempt bypass (checkbox not found)")
+                    print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
             
             # CRITICAL: Find and click the search button
             print(f"  [DEBUG] Waiting 10 seconds before searching...")

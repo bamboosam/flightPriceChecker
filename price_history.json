@@ -5,7 +5,7 @@
     "flights": [
       {
         "flightNumber": "FD 3399",
-        "price": 950,
+        "price": 1150,
         "currency": "THB",
         "departTime": "09:10",
         "arriveTime": "10:15"
@@ -34,23 +34,11 @@
     ],
     "cheapest": {
       "flightNumber": "FD 3399",
-      "price": 950,
+      "price": 1150,
       "currency": "THB",
       "departTime": "09:10",
       "arriveTime": "10:15"
     },
-    "timestamp": "2026-01-28T21:24:57.801019"
-  },
-  {
-    "check_time": "2026-01-28T15:49:01.553054",
-    "results": [
-      {
-        "route": "KOP \u2192 DMK",
-        "date": "03/02/2026",
-        "flights": [],
-        "cheapest": null,
-        "timestamp": "2026-01-28T15:49:01.548453"
-      }
-    ]
+    "timestamp": "2026-01-29T10:24:14.834099"
   }
 ]
