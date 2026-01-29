@@ -25,6 +25,7 @@ sudo apt install -y \
     git \
     xvfb \
     tightvncserver \
+    xfonts-base \
     x11-utils \
     xdotool \
     wget \
