@@ -25,12 +25,15 @@ def main():
         print(f"Starting in {i}...")
         time.sleep(1)
     
-    print()
-    print("🖱️  STARTING MOUSE MOVEMENTS NOW!")
-    print()
+    import os
+    print(f"  [DEBUG] DISPLAY environment: {os.environ.get('DISPLAY', 'NOT SET')}")
     
     # Create mouse controller
     mouse = RealMouseBypass()
+    
+    print()
+    print("🖱️  STARTING MOUSE MOVEMENTS NOW!")
+    print()
     
     # Perform 5 slow random movements
     mouse.random_mouse_movements(num_movements=5)
