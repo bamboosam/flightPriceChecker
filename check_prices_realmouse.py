@@ -120,7 +120,7 @@ async def check_flight_price(origin, destination, date):
                     print(f"  [DEBUG] Waiting for challenge to resolve...")
                     
                     # Wait for challenge to complete
-                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=30)
+                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=10)
                     
                     if challenge_passed:
                         print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
@@ -139,8 +139,9 @@ async def check_flight_price(origin, destination, date):
             # Dismiss any popups
             try:
                 await page.keyboard.press('Escape')
-                await page.wait_for_timeout(500)
+                await page.wait_for_timeout(2000)
                 print(f"  [DEBUG] Pressed Escape to dismiss any popups")
+                print(f"  [DEBUG] Waiting 2 seconds before clicking search button...")
             except Exception as e:
                 pass
             
