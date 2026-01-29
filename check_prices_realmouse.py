@@ -79,6 +79,14 @@ async def check_flight_price(origin, destination, date):
             page_title = await page.title()
             print(f"  [DEBUG] Page title: {page_title}")
             
+            # Take screenshot right after page load for debugging
+            screenshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_screenshots")
+            os.makedirs(screenshot_dir, exist_ok=True)
+            initial_screenshot = os.path.join(screenshot_dir, f"{origin}_{destination}_initial_load.png")
+            await page.screenshot(path=initial_screenshot)
+            print(f"  [DEBUG] Screenshot saved: {initial_screenshot}")
+
+            
             # Check for Cloudflare challenge and attempt REAL MOUSE bypass
             bypass = CloudflareBypass(page)
             if await bypass.detect_challenge():
