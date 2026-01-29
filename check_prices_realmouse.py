@@ -134,17 +134,17 @@ async def check_flight_price(origin, destination, date):
                 else:
                     print(f"  [DEBUG] ✗ Failed to click checkbox")
             
-            # Continue with normal flow...
-            print(f"  [DEBUG] Looking for search button...")
-            
-            # Click on page body to remove focus from URL bar and dismiss popups
+            # Click on page body first to remove focus from URL bar and dismiss popups
             try:
                 await page.click('body')
                 await page.wait_for_timeout(2000)
                 print(f"  [DEBUG] Clicked on page to remove URL bar focus")
-                print(f"  [DEBUG] Waiting 2 seconds before clicking search button...")
+                print(f"  [DEBUG] Waited 2 seconds for page to settle")
             except Exception as e:
                 pass
+            
+            # Now look for search button
+            print(f"  [DEBUG] Looking for search button...")
             
             # Try to find and click search button
             try:
