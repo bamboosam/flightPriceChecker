@@ -136,6 +136,14 @@ async def check_flight_price(origin, destination, date):
             # Continue with normal flow...
             print(f"  [DEBUG] Looking for search button...")
             
+            # Click on page body to remove focus from URL bar
+            try:
+                await page.click('body')
+                await page.wait_for_timeout(500)
+                print(f"  [DEBUG] Clicked on page to remove URL bar focus")
+            except Exception as e:
+                pass
+            
             # Dismiss any popups
             try:
                 await page.keyboard.press('Escape')
