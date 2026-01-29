@@ -9,7 +9,22 @@ Power on your VM and SSH into it:
 ssh bamboosam@192.168.122.146
 ```
 
-## 2. Start VNC Server
+## 2. Configure VNC for XFCE (First Time Only)
+
+If VNC shows GNOME instead of XFCE, reconfigure the startup script:
+
+```bash
+# Update VNC startup script to use XFCE
+cat > ~/.vnc/xstartup << 'EOF'
+#!/bin/sh
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+startxfce4 &
+EOF
+chmod +x ~/.vnc/xstartup
+```
+
+## 3. Start VNC Server
 
 Run these commands to start XFCE with VNC:
 
@@ -39,7 +54,7 @@ sleep 5
 x11vnc -display :1 -rfbport 5901 -forever -shared &
 ```
 
-## 3. Connect with VNC Viewer
+## 4. Connect with VNC Viewer
 
 On your **local machine** (not in SSH):
 
@@ -48,7 +63,7 @@ On your **local machine** (not in SSH):
 3. No password required
 4. You should see the XFCE desktop
 
-## 4. Run the Price Checker
+## 5. Run the Price Checker
 
 ### Option A: Visible Mode (Watch in VNC)
 
@@ -81,7 +96,7 @@ for i in {1..10}; do
 done
 ```
 
-## 5. Check Results
+## 6. Check Results
 
 View the price history:
 ```bash
@@ -93,7 +108,7 @@ View debug screenshots:
 ls -lh debug_screenshots/
 ```
 
-## 6. Shutdown
+## 7. Shutdown
 
 When done, you can safely shutdown:
 ```bash
