@@ -185,11 +185,7 @@ class RealMouseBypass:
             # Wait a moment before taking control
             time.sleep(0.5)
             
-            # Perform random mouse movements to simulate human behavior
-            print(f"  [MOUSE] 🎯 Moving mouse randomly to look human...")
-            self.random_mouse_movements(num_movements=5)
-            
-            # Now click the checkbox with real mouse
+            # Click the checkbox directly with real mouse
             self.click_at_position(screen_x, screen_y)
             
             print(f"  [MOUSE] ✓ Checkbox clicked with REAL mouse!")
