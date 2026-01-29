@@ -65,8 +65,6 @@ On your **local machine** (not in SSH):
 
 ## 5. Run the Price Checker
 
-### Option A: Visible Mode (Watch in VNC)
-
 Keep VNC connected and run:
 ```bash
 cd ~/flightPriceChecker
@@ -75,17 +73,7 @@ DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
 
 You'll see the browser open in VNC and watch the Cloudflare bypass in action!
 
-### Option B: Invisible Mode (Headless)
-
-No need for VNC to be connected:
-```bash
-cd ~/flightPriceChecker
-./run.sh invisible
-```
-
-This runs in the background using the existing Xvfb display.
-
-### Option C: Run Multiple Times (Test Cloudflare)
+### Run Multiple Times (Test Cloudflare)
 
 ```bash
 cd ~/flightPriceChecker
@@ -167,14 +155,9 @@ sleep 5
 x11vnc -display :1 -rfbport 5901 -forever -shared &
 ```
 
-**Run visible mode:**
+**Run the script:**
 ```bash
 DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
-```
-
-**Run invisible mode:**
-```bash
-./run.sh invisible
 ```
 
 That's it! 🚀

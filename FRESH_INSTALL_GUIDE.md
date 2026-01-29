@@ -211,8 +211,6 @@ Watch the mouse move and click in VNC.
 
 ## Step 11: Run the Price Checker
 
-### Visible Mode (Watch in VNC)
-
 Keep VNC connected:
 
 ```bash
@@ -221,15 +219,6 @@ DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
 ```
 
 You'll see the browser open and watch the Cloudflare bypass!
-
-### Invisible Mode (Headless)
-
-No VNC needed:
-
-```bash
-cd ~/flightPriceChecker
-./run.sh invisible
-```
 
 ---
 
@@ -288,8 +277,10 @@ crontab -e
 Add this line to run every hour:
 
 ```bash
-0 * * * * cd /home/your_username/flightPriceChecker && ./run.sh invisible >> /tmp/price_checker.log 2>&1
+0 * * * * cd /home/your_username/flightPriceChecker && DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py >> /tmp/price_checker.log 2>&1
 ```
+
+**Note:** Make sure VNC/Xvfb is running for automated jobs.
 
 ---
 
@@ -338,14 +329,9 @@ sleep 5
 x11vnc -display :1 -rfbport 5901 -forever -shared &
 ```
 
-**Run visible mode:**
+**Run the script:**
 ```bash
 DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
-```
-
-**Run invisible mode:**
-```bash
-./run.sh invisible
 ```
 
 **Update code:**
