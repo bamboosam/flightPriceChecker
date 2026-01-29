@@ -24,6 +24,7 @@ sudo apt install -y \
     build-essential \
     git \
     xvfb \
+    tightvncserver \
     x11-utils \
     xdotool \
     wget \
