@@ -124,8 +124,8 @@ async def check_flight_price(origin, destination, date):
                     
                     if challenge_passed:
                         print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
-                        print(f"  [DEBUG] Waiting 30 seconds for page to fully load...")
-                        await page.wait_for_timeout(30000)
+                        print(f"  [DEBUG] Waiting 10 seconds for page to fully load...")
+                        await page.wait_for_timeout(10000)
                         page_title = await page.title()
                         print(f"  [DEBUG] New page title: {page_title}")
                     else:
