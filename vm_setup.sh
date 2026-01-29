@@ -21,6 +21,7 @@ sudo apt install -y \
     python3-venv \
     python3-tk \
     python3-dev \
+    build-essential \
     git \
     xvfb \
     x11-utils \
