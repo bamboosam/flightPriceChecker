@@ -5,7 +5,15 @@ routes:
   - origin: KOP
     destination: DMK
     date: '03/02/2026'
-    
+
+# Cloudflare Bypass Settings
+# Coordinates differ by environment:
+#   VM (XFCE): 207, 397
+#   Docker (LXDE): 212, 375
+cloudflare:
+  checkbox_x: 212
+  checkbox_y: 375
+
 # Notification Settings (optional)
 notifications:
   telegram:

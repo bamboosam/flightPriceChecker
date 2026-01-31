@@ -70,7 +70,7 @@ class RealMouseBypass:
         
         return True
 
-async def check_flight_price(origin, destination, date):
+async def check_flight_price(origin, destination, date, config):
     """Check price for a single route using REAL MOUSE CONTROL"""
     url = f"https://www.airasia.com/flights/search/?origin={origin}&destination={destination}&departDate={date.replace('/', '%2F')}&tripType=O&adult=1&locale=en-gb&currency=THB"
     
@@ -159,9 +159,11 @@ async def check_flight_price(origin, destination, date):
                 print(f"  [DEBUG] Screenshot saved: {cf_screenshot}")
                 
                 # Use manually found checkbox coordinates (more reliable than OpenCV)
-                # Coordinates found using xdotool: (207, 397)
-                page_x, page_y = 207, 397
-                print(f"  [DEBUG] Using manual checkbox coords: ({page_x}, {page_y})")
+                # Read from config.yml - defaults: Docker (212, 375), VM (207, 397)
+                cf_config = config.get('cloudflare', {})
+                page_x = cf_config.get('checkbox_x', 212)
+                page_y = cf_config.get('checkbox_y', 375)
+                print(f"  [DEBUG] Using checkbox coords from config: ({page_x}, {page_y})")
                 
                 # Use REAL MOUSE to click the checkbox
                 print(f"  [DEBUG] Taking control of your mouse in 2 seconds...")
@@ -340,7 +342,7 @@ async def main():
     
     for route in config['routes']:
         print(f"\nChecking {route['origin']} → {route['destination']} on {route['date']}...")
-        result = await check_flight_price(route['origin'], route['destination'], route['date'])
+        result = await check_flight_price(route['origin'], route['destination'], route['date'], config)
         results.append(result)
     
     # Save results
