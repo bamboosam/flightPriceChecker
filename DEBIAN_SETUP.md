@@ -36,9 +36,6 @@ sudo apt update
 git clone https://github.com/bamboosam/flightPriceChecker.git
 cd flightPriceChecker
 
-# Checkout bypass branch
-git checkout bypass-cloudflare
-
 # Make setup script executable
 chmod +x vm_setup.sh run.sh
 
@@ -120,7 +117,6 @@ ssh user@vm-ip
 # 3. Clone and setup
 git clone https://github.com/bamboosam/flightPriceChecker.git
 cd flightPriceChecker
-git checkout bypass-cloudflare
 chmod +x vm_setup.sh run.sh
 ./vm_setup.sh
 

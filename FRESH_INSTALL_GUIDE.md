@@ -99,7 +99,6 @@ chmod +x ~/.vnc/xstartup
 cd ~
 git clone https://github.com/bamboosam/flightPriceChecker.git
 cd flightPriceChecker
-git checkout bypass-cloudflare
 ```
 
 ---
@@ -342,7 +341,7 @@ DISPLAY=:1 ./venv/bin/python3 check_prices_realmouse.py
 
 **Update code:**
 ```bash
-git pull origin bypass-cloudflare
+git pull origin main
 ```
 
 ---
