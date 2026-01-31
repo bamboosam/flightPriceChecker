@@ -17,14 +17,58 @@ from datetime import datetime
 import json
 import os
 import yaml
-from cloudflare_bypass import CloudflareBypass
-from real_mouse_bypass import RealMouseBypass
+import time
+import random
+
+try:
+    import pyautogui
+    pyautogui.PAUSE = 0.1
+    pyautogui.FAILSAFE = False
+    HAS_PYAUTOGUI = True
+except ImportError:
+    HAS_PYAUTOGUI = False
+    print("WARNING: PyAutoGUI not available. Real mouse control disabled.")
 
 # Fixed browser dimensions for consistent coordinate mapping
 BROWSER_WIDTH = 1280
 BROWSER_HEIGHT = 720
 BROWSER_X = 100  # Position on screen
 BROWSER_Y = 100
+
+class RealMouseBypass:
+    """Controls real mouse for Cloudflare bypass"""
+    
+    def __init__(self):
+        self.browser_x = 0
+        self.browser_y = 0
+    
+    def set_browser_position(self, x, y):
+        self.browser_x = x
+        self.browser_y = y
+    
+    def click_checkbox(self, page_x, page_y):
+        if not HAS_PYAUTOGUI:
+            print("  [ERROR] PyAutoGUI not available")
+            return False
+        
+        screen_x = self.browser_x + page_x
+        screen_y = self.browser_y + page_y
+        
+        print(f"  [DEBUG] Moving mouse to screen coords: ({screen_x}, {screen_y})")
+        
+        # Human-like mouse movements
+        for _ in range(5):
+            rand_x = random.randint(100, 800)
+            rand_y = random.randint(100, 600)
+            pyautogui.moveTo(rand_x, rand_y, duration=0.2)
+            time.sleep(0.1)
+        
+        # Move to target and click
+        pyautogui.moveTo(screen_x, screen_y, duration=0.3)
+        time.sleep(0.2)
+        pyautogui.click()
+        
+        return True
 
 async def check_flight_price(origin, destination, date):
     """Check price for a single route using REAL MOUSE CONTROL"""
@@ -88,8 +132,19 @@ async def check_flight_price(origin, destination, date):
 
             
             # Check for Cloudflare challenge and attempt REAL MOUSE bypass
-            bypass = CloudflareBypass(page)
-            if await bypass.detect_challenge():
+            # Inline Cloudflare detection
+            is_cloudflare = await page.evaluate("""
+                () => {
+                    const title = document.title.toLowerCase();
+                    const body = document.body?.innerText?.toLowerCase() || '';
+                    return title.includes('just a moment') || 
+                           title.includes('cloudflare') ||
+                           body.includes('checking your browser') ||
+                           body.includes('verify you are human');
+                }
+            """)
+            
+            if is_cloudflare:
                 print(f"  [DEBUG] ⚠ Cloudflare challenge detected!")
                 print(f"  [DEBUG] 🖱️  REAL MOUSE CONTROL MODE ACTIVATED!")
                 print(f"  [DEBUG] ⚠️  DON'T TOUCH YOUR MOUSE!")
@@ -119,15 +174,22 @@ async def check_flight_price(origin, destination, date):
                     print(f"  [DEBUG] ✓ Checkbox clicked with REAL mouse!")
                     print(f"  [DEBUG] Waiting for challenge to resolve...")
                     
-                    # Wait for challenge to complete
-                    challenge_passed = await bypass.wait_for_challenge_completion(timeout=10)
-                    
-                    if challenge_passed:
-                        print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
-                        print(f"  [DEBUG] Waiting 10 seconds for page to fully load...")
-                        await page.wait_for_timeout(10000)
-                        page_title = await page.title()
-                        print(f"  [DEBUG] New page title: {page_title}")
+                    # Wait for challenge to complete (check for 10 seconds)
+                    for _ in range(10):
+                        await page.wait_for_timeout(1000)
+                        still_cloudflare = await page.evaluate("""
+                            () => {
+                                const title = document.title.toLowerCase();
+                                return title.includes('just a moment') || title.includes('cloudflare');
+                            }
+                        """)
+                        if not still_cloudflare:
+                            print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
+                            print(f"  [DEBUG] Waiting 10 seconds for page to fully load...")
+                            await page.wait_for_timeout(10000)
+                            page_title = await page.title()
+                            print(f"  [DEBUG] New page title: {page_title}")
+                            break
                     else:
                         print(f"  [DEBUG] ✗ Challenge did not resolve")
                         print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
