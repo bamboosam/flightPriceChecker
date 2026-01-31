@@ -1,7 +1,5 @@
-playwright>=1.49.0
-pyyaml==6.0.1
-opencv-python==4.10.0.84
-numpy>=2.1.0
-pyautogui==0.9.54
-pillow>=11.0.0
-greenlet>=3.1.1
+playwright>=1.48.0
+pyyaml>=6.0
+pyautogui>=0.9.54
+python-xlib
+pillow>=10.0.0
