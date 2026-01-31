@@ -74,13 +74,18 @@ async def check_flight_price(origin, destination, date, config):
     """Check price for a single route using REAL MOUSE CONTROL"""
     url = f"https://www.airasia.com/flights/search/?origin={origin}&destination={destination}&departDate={date.replace('/', '%2F')}&tripType=O&adult=1&locale=en-gb&currency=THB"
     
+    # Get browser position from config (defaults for Docker: 0,0)
+    cf_config = config.get('cloudflare', {})
+    browser_x = cf_config.get('browser_x', 0)
+    browser_y = cf_config.get('browser_y', 0)
+    
     # Initialize real mouse controller
     real_mouse = RealMouseBypass()
-    real_mouse.set_browser_position(BROWSER_X, BROWSER_Y)
+    real_mouse.set_browser_position(browser_x, browser_y)
     
     async with async_playwright() as p:
         # Launch browser in HEADED mode with FIXED size and position
-        print(f"  [DEBUG] Launching HEADED browser at ({BROWSER_X}, {BROWSER_Y})...")
+        print(f"  [DEBUG] Launching HEADED browser at ({browser_x}, {browser_y})...")
         browser = await p.chromium.launch(
             headless=False,  # ← HEADED MODE (visible)
             args=[
@@ -88,7 +93,7 @@ async def check_flight_price(origin, destination, date, config):
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                f'--window-position={BROWSER_X},{BROWSER_Y}',
+                f'--window-position={browser_x},{browser_y}',
                 f'--window-size={BROWSER_WIDTH},{BROWSER_HEIGHT}',
             ]
         )
