@@ -68,8 +68,8 @@ async def check_flight_price(origin, destination, date, config):
     real_mouse = RealMouseBypass()
     
     async with async_playwright() as p:
-        # Launch browser in HEADED mode
-        print(f"  [DEBUG] Launching HEADED browser...")
+        # Launch browser in FULLSCREEN (kiosk) mode
+        print(f"  [DEBUG] Launching HEADED browser in FULLSCREEN mode...")
         browser = await p.chromium.launch(
             headless=False,  # ← HEADED MODE (visible)
             args=[
@@ -77,7 +77,7 @@ async def check_flight_price(origin, destination, date, config):
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--start-maximized',
+                '--kiosk',  # Fullscreen mode
             ]
         )
         
