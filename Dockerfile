@@ -1,17 +1,22 @@
-FROM consol/ubuntu-xfce-vnc:latest
+FROM dorowu/ubuntu-desktop-lxde-vnc:focal
 
 # Switch to root for installation
 USER root
 
-# Install Python and dependencies
+# Install Python 3.11 and dependencies
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
+    software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
     xdotool \
     libx11-dev \
     libxtst-dev \
     libxinerama-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -19,7 +24,7 @@ WORKDIR /app
 
 # Copy requirements and install
 COPY requirements.txt .
-RUN python3 -m venv venv && \
+RUN python3.11 -m venv venv && \
     ./venv/bin/pip install --upgrade pip && \
     ./venv/bin/pip install -r requirements.txt && \
     ./venv/bin/pip install pyautogui python-xlib
@@ -41,8 +46,5 @@ export DISPLAY=:1\n\
 ./venv/bin/python3 check_prices_realmouse.py\n\
 ' > /app/run_checker.sh && chmod +x /app/run_checker.sh
 
-# Switch back to default user
-USER 1000
-
-# Default command starts VNC desktop
-# Run the checker manually via VNC terminal or: docker exec flight-checker /app/run_checker.sh
+# VNC is already set up by base image
+# Access via http://localhost:6901 or VNC :5901
