@@ -10,6 +10,7 @@ RUN rm -f /etc/apt/sources.list.d/google-chrome.list 2>/dev/null || true && \
     python3-pip \
     python3-venv \
     python3-dev \
+    python3-tk \
     xdotool \
     libx11-dev \
     libxtst-dev \
