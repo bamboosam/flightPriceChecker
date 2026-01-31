@@ -46,6 +46,12 @@ sudo apt install -y xfce4 xfce4-goodies
 
 **Note:** When prompted to choose a display manager, select **lightdm** (or skip if not prompted).
 
+Remove xiccd to prevent color manager errors:
+
+```bash
+sudo apt remove -y xiccd
+```
+
 ---
 
 ## Step 3: Install X11 Libraries (Critical for Mouse Control)
