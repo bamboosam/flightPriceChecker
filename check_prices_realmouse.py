@@ -165,24 +165,33 @@ async def check_flight_price(origin, destination, date, config):
                     print(f"  [DEBUG] Waiting for challenge to resolve...")
                     
                     # Wait for challenge to complete (check for 10 seconds)
-                    for _ in range(10):
-                        await page.wait_for_timeout(1000)
-                        still_cloudflare = await page.evaluate("""
-                            () => {
-                                const title = document.title.toLowerCase();
-                                return title.includes('just a moment') || title.includes('cloudflare');
-                            }
-                        """)
-                        if not still_cloudflare:
-                            print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
-                            print(f"  [DEBUG] Waiting 10 seconds for page to fully load...")
-                            await page.wait_for_timeout(10000)
-                            page_title = await page.title()
-                            print(f"  [DEBUG] New page title: {page_title}")
-                            break
-                    else:
-                        print(f"  [DEBUG] ✗ Challenge did not resolve")
-                        print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
+                    try:
+                        for _ in range(10):
+                            await page.wait_for_timeout(1000)
+                            still_cloudflare = await page.evaluate("""
+                                () => {
+                                    const title = document.title.toLowerCase();
+                                    return title.includes('just a moment') || title.includes('cloudflare');
+                                }
+                            """)
+                            if not still_cloudflare:
+                                print(f"  [DEBUG] ✓ Cloudflare challenge PASSED!")
+                                break
+                        else:
+                            print(f"  [DEBUG] ✗ Challenge did not resolve")
+                            print(f"  [DEBUG] 💡 The checkbox might need to be clicked again")
+                    except Exception as nav_error:
+                        # Page navigation = Cloudflare passed!
+                        if "Execution context was destroyed" in str(nav_error):
+                            print(f"  [DEBUG] ✓ Cloudflare challenge PASSED! (page navigated)")
+                        else:
+                            print(f"  [DEBUG] Navigation error: {nav_error}")
+                    
+                    # Wait for AirAsia page to load
+                    print(f"  [DEBUG] Waiting 10 seconds for AirAsia page to load...")
+                    await page.wait_for_timeout(10000)
+                    page_title = await page.title()
+                    print(f"  [DEBUG] Current page title: {page_title}")
                 else:
                     print(f"  [DEBUG] ✗ Failed to click checkbox")
             
