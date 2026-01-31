@@ -3,8 +3,9 @@ FROM dorowu/ubuntu-desktop-lxde-vnc:focal
 # Switch to root for installation
 USER root
 
-# Install Python 3.11 and dependencies
-RUN apt-get update && apt-get install -y \
+# Fix broken Chrome repo and install Python 3.11
+RUN rm -f /etc/apt/sources.list.d/google-chrome.list 2>/dev/null || true && \
+    apt-get update && apt-get install -y \
     software-properties-common \
     && add-apt-repository -y ppa:deadsnakes/ppa \
     && apt-get update \
