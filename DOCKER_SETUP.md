@@ -22,7 +22,7 @@ docker compose version
 ## Quick Start
 
 ```bash
-# Build and start the container
+# Build and start the containers (flight-checker-1 and flight-checker-2)
 docker compose up -d --build
 
 # Wait ~2 minutes for build to complete
@@ -31,38 +31,42 @@ docker compose logs -f
 
 ## Access the Desktop
 
-**Option 1: Browser (noVNC)**
-- Open: `http://localhost:6901`
+**Container 1** (`flight-checker-1`)
+- Browser: `http://localhost:6901`
+- VNC: `localhost:5901`
 - Password: `flightcheck`
 
-**Option 2: VNC Viewer**
-- Connect: `localhost:5901`
+**Container 2** (`flight-checker-2`)
+- Browser: `http://localhost:6902`
+- VNC: `localhost:5902`
 - Password: `flightcheck`
 
 ## Run the Price Checker
 
-Inside the VNC desktop, open a terminal and run:
+**Option 1: Run on ONE container**
+```bash
+docker exec flight-checker-1 /app/run_checker.sh
+```
 
+**Option 2: Run on ALL containers (Parallel)**
+```bash
+./run_all.sh
+```
+
+**Option 3: Interactive (Debug)**
+Inside the VNC desktop terminal:
 ```bash
 cd /app
 ./run_checker.sh
 ```
 
-Or from your host machine:
-
-```bash
-docker exec flight-checker /app/run_checker.sh
-```
-
 ## View Results
 
-Results are saved to your local `price_history.json` (mounted volume).
+Both containers write to the **same** local `price_history.json` file (shared volume):
 
 ```bash
 cat price_history.json
 ```
-
-## Stop Container
 
 ```bash
 docker compose down
