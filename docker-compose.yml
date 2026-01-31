@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  flight-checker:
+    build: .
+    container_name: flight-checker
+    ports:
+      - "6901:6901"  # VNC web access
+      - "5901:5901"  # VNC direct access
+    environment:
+      - VNC_PW=flightcheck
+      - VNC_RESOLUTION=1280x720
+      - DISPLAY=:1
+    shm_size: 2gb
+    volumes:
+      - ./config.yml:/app/config.yml
+      - ./price_history.json:/app/price_history.json
+    restart: unless-stopped
