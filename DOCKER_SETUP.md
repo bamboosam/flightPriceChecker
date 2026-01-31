@@ -2,6 +2,38 @@
 
 Run the flight price checker in a Docker container with desktop environment and VNC access.
 
+## Install Docker (Debian 13)
+
+```bash
+# Update packages
+sudo apt update
+
+# Install prerequisites
+sudo apt install -y ca-certificates curl gnupg
+
+# Add Docker's official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add Docker repository (use bookworm for Debian 13/Trixie)
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Add your user to docker group (no sudo needed)
+sudo usermod -aG docker $USER
+
+# Apply group changes (or logout/login)
+newgrp docker
+
+# Verify installation
+docker --version
+docker compose version
+```
+
 ## Quick Start
 
 ```bash
