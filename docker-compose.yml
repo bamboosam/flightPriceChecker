@@ -5,12 +5,11 @@ services:
     build: .
     container_name: flight-checker
     ports:
-      - "6901:6901"  # VNC web access
-      - "5901:5901"  # VNC direct access
+      - "6901:80"    # Web VNC (nginx on port 80 inside)
+      - "5901:5900"  # VNC direct (VNC on 5900 inside)
     environment:
       - VNC_PW=flightcheck
-      - VNC_RESOLUTION=1280x720
-      - DISPLAY=:1
+      - RESOLUTION=1280x720
     shm_size: 2gb
     volumes:
       - ./config.yml:/app/config.yml
