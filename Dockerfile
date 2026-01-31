@@ -3,16 +3,13 @@ FROM dorowu/ubuntu-desktop-lxde-vnc:focal
 # Switch to root for installation
 USER root
 
-# Fix broken Chrome repo and install Python 3.11
+# Fix broken repos and install dependencies
 RUN rm -f /etc/apt/sources.list.d/google-chrome.list 2>/dev/null || true && \
     apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev \
     xdotool \
     libx11-dev \
     libxtst-dev \
@@ -25,7 +22,7 @@ WORKDIR /app
 
 # Copy requirements and install
 COPY requirements.txt .
-RUN python3.11 -m venv venv && \
+RUN python3 -m venv venv && \
     ./venv/bin/pip install --upgrade pip && \
     ./venv/bin/pip install -r requirements.txt && \
     ./venv/bin/pip install pyautogui python-xlib
