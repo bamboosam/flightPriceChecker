@@ -10,7 +10,7 @@ routes:
 # These are ABSOLUTE screen coordinates (found using xdotool)
 cloudflare:
   checkbox_x: 212
-  checkbox_y: 375
+  checkbox_y: 291
 
 # Notification Settings (optional)
 notifications:
