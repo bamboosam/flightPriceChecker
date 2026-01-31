@@ -195,12 +195,14 @@ async def check_flight_price(origin, destination, date, config):
                 else:
                     print(f"  [DEBUG] ✗ Failed to click checkbox")
             
-            # Click on page body first to remove focus from URL bar and dismiss popups
+            # Click on page body with REAL mouse to remove focus from URL bar
             try:
-                await page.click('body')
+                # Click in center of screen with real mouse
+                import pyautogui
+                screen_w, screen_h = pyautogui.size()
+                pyautogui.click(screen_w // 2, screen_h // 2)
                 await page.wait_for_timeout(2000)
-                print(f"  [DEBUG] Clicked on page to remove URL bar focus")
-                print(f"  [DEBUG] Waited 2 seconds for page to settle")
+                print(f"  [DEBUG] Real mouse clicked center of screen to remove URL bar focus")
             except Exception as e:
                 pass
             
