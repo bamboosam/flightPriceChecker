@@ -38,25 +38,15 @@ BROWSER_Y = 100
 class RealMouseBypass:
     """Controls real mouse for Cloudflare bypass"""
     
-    def __init__(self):
-        self.browser_x = 0
-        self.browser_y = 0
-    
-    def set_browser_position(self, x, y):
-        self.browser_x = x
-        self.browser_y = y
-    
-    def click_checkbox(self, page_x, page_y):
+    def click_at(self, x, y):
+        """Click at absolute screen coordinates"""
         if not HAS_PYAUTOGUI:
             print("  [ERROR] PyAutoGUI not available")
             return False
         
-        screen_x = self.browser_x + page_x
-        screen_y = self.browser_y + page_y
+        print(f"  [DEBUG] Moving mouse to screen coords: ({x}, {y})")
         
-        print(f"  [DEBUG] Moving mouse to screen coords: ({screen_x}, {screen_y})")
-        
-        # Human-like mouse movements
+        # Human-like random mouse movements first
         for _ in range(5):
             rand_x = random.randint(100, 800)
             rand_y = random.randint(100, 600)
@@ -64,7 +54,7 @@ class RealMouseBypass:
             time.sleep(0.1)
         
         # Move to target and click
-        pyautogui.moveTo(screen_x, screen_y, duration=0.3)
+        pyautogui.moveTo(x, y, duration=0.3)
         time.sleep(0.2)
         pyautogui.click()
         
@@ -74,18 +64,12 @@ async def check_flight_price(origin, destination, date, config):
     """Check price for a single route using REAL MOUSE CONTROL"""
     url = f"https://www.airasia.com/flights/search/?origin={origin}&destination={destination}&departDate={date.replace('/', '%2F')}&tripType=O&adult=1&locale=en-gb&currency=THB"
     
-    # Get browser position from config (defaults for Docker: 0,0)
-    cf_config = config.get('cloudflare', {})
-    browser_x = cf_config.get('browser_x', 0)
-    browser_y = cf_config.get('browser_y', 0)
-    
     # Initialize real mouse controller
     real_mouse = RealMouseBypass()
-    real_mouse.set_browser_position(browser_x, browser_y)
     
     async with async_playwright() as p:
-        # Launch browser in HEADED mode with FIXED size and position
-        print(f"  [DEBUG] Launching HEADED browser at ({browser_x}, {browser_y})...")
+        # Launch browser in HEADED mode
+        print(f"  [DEBUG] Launching HEADED browser...")
         browser = await p.chromium.launch(
             headless=False,  # ← HEADED MODE (visible)
             args=[
@@ -93,8 +77,7 @@ async def check_flight_price(origin, destination, date, config):
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                f'--window-position={browser_x},{browser_y}',
-                f'--window-size={BROWSER_WIDTH},{BROWSER_HEIGHT}',
+                '--start-maximized',
             ]
         )
         
@@ -174,8 +157,8 @@ async def check_flight_price(origin, destination, date, config):
                 print(f"  [DEBUG] Taking control of your mouse in 2 seconds...")
                 await page.wait_for_timeout(2000)
                 
-                # Click with real mouse
-                success = real_mouse.click_checkbox(page_x, page_y)
+                # Click with real mouse at absolute screen coordinates
+                success = real_mouse.click_at(page_x, page_y)
                 
                 if success:
                     print(f"  [DEBUG] ✓ Checkbox clicked with REAL mouse!")

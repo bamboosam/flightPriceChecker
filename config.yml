@@ -7,14 +7,10 @@ routes:
     date: '03/02/2026'
 
 # Cloudflare Bypass Settings
-# Coordinates differ by environment:
-#   VM (XFCE): checkbox 207,397 with browser at 100,100
-#   Docker (LXDE): checkbox 212,375 with browser at 0,0
+# These are ABSOLUTE screen coordinates (found using xdotool)
 cloudflare:
   checkbox_x: 212
   checkbox_y: 375
-  browser_x: 0    # Browser window X position on screen
-  browser_y: 0    # Browser window Y position on screen
 
 # Notification Settings (optional)
 notifications:
