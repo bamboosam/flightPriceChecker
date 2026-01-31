@@ -28,10 +28,10 @@ RUN python3 -m venv venv && \
     ./venv/bin/pip install -r requirements.txt && \
     ./venv/bin/pip install pyautogui python-xlib
 
-# Install Playwright and browsers
+# Install Playwright and Firefox (more stable than Chromium in containers)
 RUN ./venv/bin/pip install playwright && \
-    ./venv/bin/playwright install chromium && \
-    ./venv/bin/playwright install-deps chromium
+    ./venv/bin/playwright install firefox && \
+    ./venv/bin/playwright install-deps firefox
 
 # Copy application files
 COPY check_prices_realmouse.py .

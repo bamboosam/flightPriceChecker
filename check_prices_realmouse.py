@@ -68,33 +68,28 @@ async def check_flight_price(origin, destination, date, config):
     real_mouse = RealMouseBypass()
     
     async with async_playwright() as p:
-        # Launch browser in FULLSCREEN (kiosk) mode
-        print(f"  [DEBUG] Launching HEADED browser in FULLSCREEN mode...")
-        browser = await p.chromium.launch(
+        # Launch Firefox (more stable in containers than Chromium)
+        print(f"  [DEBUG] Launching Firefox browser in FULLSCREEN mode...")
+        browser = await p.firefox.launch(
             headless=False,  # ← HEADED MODE (visible)
+            firefox_user_prefs={
+                "dom.webdriver.enabled": False,
+                "useAutomationExtension": False,
+            },
             args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
                 '--kiosk',  # Fullscreen mode
             ]
         )
         
         # Create context with FIXED viewport
         context = await browser.new_context(
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
             viewport={'width': BROWSER_WIDTH, 'height': BROWSER_HEIGHT},
             locale='en-GB',
             timezone_id='Asia/Bangkok',
         )
         
-        # Hide webdriver property
-        await context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
-        """)
+        # No need for webdriver hide script - Firefox handles it via user_prefs
         
         page = await context.new_page()
         
